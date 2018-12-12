@@ -28,10 +28,10 @@ const typeDefs = `
 const resolvers = {
   Query: {
     id() {
-      return "abc19821";
+      return "abx_#ef9%R241";
     },
     name() {
-      return `Zubin Pratap`;
+      return `Zubin aka ZeusCoder`;
     },
     age() {
       return 37;
