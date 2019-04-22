@@ -12,12 +12,24 @@ import { GraphQLServer } from "graphql-yoga";
 
 const typeDefs = `
     type Query {            
-        id: ID!
-        location: String!
-        name: String!
-        age: Int!
-        employed: Boolean!
-        gpa: Float    # not null safe - can return EITHER null or Float
+        me: User!
+        post: Post!
+    }
+
+    type User {
+      id: ID!
+      name: String!
+      email: String!
+      age: Int
+    }
+
+    type Post {
+      id: ID!,
+      title: String!
+      body: String!
+      published: Boolean!,
+      author: String
+
     }
 `;
 
@@ -29,23 +41,21 @@ const typeDefs = `
 
 const resolvers = {
   Query: {
-    id() {
-      return "abx_#ef9%R241";
+    me() {
+      return {
+        id: "23ruj",
+        name: "Zubin Pratap",
+        email: "zubin@fakemail.com"
+      };
     },
-    location() {
-      return "Melbourne, Australia";
-    },
-    name() {
-      return `Zubin aka ZeusCoder`;
-    },
-    age() {
-      return 37;
-    },
-    employed() {
-      return false;
-    },
-    gpa() {
-      return null;
+    post() {
+      return {
+        id: `!@$d6web8`,
+        title: "This is a post title!",
+        body: "and this...is the body of the post that was posted",
+        published: true,
+        author: "Zubin Pratap"
+      };
     }
   }
 };
