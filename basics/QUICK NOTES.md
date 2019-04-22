@@ -1,6 +1,19 @@
 #Operations
 Broadly two types - Queries and Mutations.
 
+#### Operation Arguments
+These are used to pass data from the client to server.  There are 4 arguments that get passed to __every__ [resolver](#Resolvers) function. 
+The signature for declaring Queries that take operational arguments is:
+`nameOfQuery(nameOfArg: <type of arg>): <return type of query> `
+```
+type Query {           
+        greeting(name: String): String!
+    }
+```
+
+
+
+
 #typeDefs
 This is how you define the type of __Operations__ and the data types of values retrieved.
 
@@ -48,6 +61,7 @@ The `User` type is declared and defined, and then a Query type is defined with a
 2) each property correlates to the Operation type (Query or Mutation) defined in the typeDefs object
 3) Each property contains resolver methods as properties
 4) these methods return data, which must conform to the type definitions
+5) the methods always get passed 4 arguments: `parent`, `args`, `ctx` (context), and `info` (meta data about operations)
 
 Resolvers are functions declared and implemented inside a JS object.  Each property of the object must correlate to the Type of data specified in the Type Definitions.
 

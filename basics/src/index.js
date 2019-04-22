@@ -14,6 +14,8 @@ const typeDefs = `
     type Query {            
         me: User!
         post: Post!
+        greeting(name: String): String!
+        add(a: Float!, b: Float!): Float!
     }
 
     type User {
@@ -56,7 +58,21 @@ const resolvers = {
         published: true,
         author: "Zubin Pratap"
       };
+    },
+    greeting(parent, args, ctx, info ){
+      console.log(args)
+      if (args.name){
+        return `Hello, ${args.name}!`
+      }
+
+      //else
+      return 'Hello, stranger!'
+    },
+    add(){
+      let args = arguments[1]
+      return args.a + args.b
     }
+//end of resolvers object
   }
 };
 
