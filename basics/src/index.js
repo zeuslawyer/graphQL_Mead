@@ -2,16 +2,18 @@ import { GraphQLServer } from "graphql-yoga";
 
 // REFERENCE playground: https://graphql-demo.mead.io/
 
-/*
-    type definitions - data structures and types. 
-    Written in the GraphQL query lang, wrapped in back ticks
-    Query -> operation type. Other types incl mutation
-     ->   always returns a String type
+/**
+    type definitions AKA schema - data structures and types. 
+    Written in the GraphQL query lang, wrapped in back ticks.
+
+    Query -> operation type. ->   always returns a String type
+    Other types incl mutation.
 */
 
 const typeDefs = `
     type Query {            
         id: ID!
+        location: String!
         name: String!
         age: Int!
         employed: Boolean!
@@ -29,6 +31,9 @@ const resolvers = {
   Query: {
     id() {
       return "abx_#ef9%R241";
+    },
+    location() {
+      return "Melbourne, Australia";
     },
     name() {
       return `Zubin aka ZeusCoder`;
