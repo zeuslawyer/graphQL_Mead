@@ -11,7 +11,17 @@ type Query {
     }
 ```
 
+Then in the resolvers object add the following:
+```
+greeting(parent, args, ctx, info ){
+      if (args.name){
+        return `Hello, ${args.name}!`
+      }
 
+      //else
+      return 'Hello, stranger!'
+    },
+```
 
 
 #typeDefs

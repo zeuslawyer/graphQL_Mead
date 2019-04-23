@@ -1,4 +1,5 @@
 import { GraphQLServer } from "graphql-yoga";
+import { ADDRCONFIG } from "dns";
 
 // REFERENCE playground: https://graphql-demo.mead.io/
 
@@ -14,8 +15,12 @@ const typeDefs = `
     type Query {            
         me: User!
         post: Post!
+        users (name: String) : [User!]!
+        posts (title: String) : [Post!]!
         greeting(name: String): String!
         add(a: Float!, b: Float!): Float!
+        addFloats(numbers: [Float!]!): Float!
+        grades: [Int!]!
     }
 
     type User {
@@ -31,7 +36,6 @@ const typeDefs = `
       body: String!
       published: Boolean!,
       author: String
-
     }
 `;
 
@@ -59,20 +63,57 @@ const resolvers = {
         author: "Zubin Pratap"
       };
     },
-    greeting(parent, args, ctx, info ){
-      console.log(args)
-      if (args.name){
-        return `Hello, ${args.name}!`
+    users(parent, args, ctx, info) {
+      //if no query params from client
+      if (!args.name) {
+        return dummyData.usersArray;
+      }
+      //else
+      return dummyData.usersArray.filter(user => {
+        return user.name.toLowerCase().includes(args.name.toLowerCase());
+      });
+    },
+
+    posts(parent, args, ctx, info) {
+      // if no title query param
+      if (!args.title) {
+        return dummyData.postsArray;
+      }
+
+      return dummyData.postsArray.filter((post)=>{
+        return post.title.toLowerCase().includes(args.title.toLowerCase())
+      })
+    },
+
+    greeting(parent, args, ctx, info) {
+      console.log(parent, args, ctx, info);
+      if (args.name) {
+        return `Hello, ${args.name}!`;
       }
 
       //else
-      return 'Hello, stranger!'
+      return "Hello, stranger!";
     },
-    add(){
-      let args = arguments[1]
-      return args.a + args.b
+
+    add() {
+      let args = arguments[1];
+
+      return args.a + args.b;
+    },
+
+    grades() {
+      return [90, 67, 88];
+    },
+
+    addFloats(parent, args, ctx, info) {
+      if (args.numbers === 0) return 0;
+
+      //else
+      return args.numbers.reduce((accum, currentVal) => {
+        return accum + currentVal;
+      });
     }
-//end of resolvers object
+    //end of resolvers object
   }
 };
 
@@ -80,3 +121,47 @@ const server = new GraphQLServer({ typeDefs, resolvers });
 server.start(() => {
   console.log("Server running on default port: 4000");
 });
+
+var dummyData = {
+  usersArray: [
+    {
+      id: "23ruj",
+      name: "Zubin Pratap",
+      email: "zubin@fakemail.com"
+    },
+    {
+      id: "457yhdf",
+      name: "Rowena Horne",
+      email: "rowena@fakemail.com"
+    },
+    {
+      id: "983hgd023r",
+      name: "Maggie Hound",
+      email: "maggie@fakemail.com",
+      age: 13
+    }
+  ],
+  postsArray: [
+    {
+      id: `!@$d6web8`,
+      title: "This is a post title!",
+      body: "and this...is the body of the post that was posted",
+      published: true,
+      author: "Zubin Pratap"
+    },
+    {
+      id: `237fdf78gdyfb`,
+      title: "What? Coding? Urk.",
+      body: "this common reaction is unfortunate....",
+      published: false,
+      author: "Zubin Pratap"
+    },
+    {
+      id: `k8735ybfs`,
+      title: "What happened to Right Said Fred?",
+      body: "I was deeply dippy about some of their songs...",
+      published: true,
+      author: "Maggie Hound"
+    }
+  ]
+};
