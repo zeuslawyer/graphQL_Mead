@@ -29,6 +29,7 @@ const typeDefs = `
       email: String!
       age: Int
       posts: [Post!]!
+      comments: [Comment!]!
     }
 
     type Post {
@@ -37,11 +38,14 @@ const typeDefs = `
       body: String!
       published: Boolean!,
       author: User!
+      comments: [Comment!]!
     }
 
     type Comment {
       id: ID!
       text: String!
+      author: User!
+      post: Post!
     }
 `;
 
@@ -113,15 +117,15 @@ const resolvers = {
       });
     },
 
-    comments(parent, args, ctx, info){
+    comments(parent, args, ctx, info) {
       //match query param if it exists
-      if (args.id){
-        return dummyData.comments.filter(comm =>{
-          return args.id === comm.id
-        })
+      if (args.id) {
+        return dummyData.comments.filter(comm => {
+          return args.id === comm.id;
+        });
       }
       //else
-      return dummyData.comments
+      return dummyData.comments;
     }
   },
 
@@ -131,6 +135,12 @@ const resolvers = {
       return dummyData.usersArray.find(user => {
         return user.id === parent.author;
       });
+    },
+    comments(parent, args, ctx, info) {
+      return dummyData.comments.filter(comment => {
+        console.log(comment.post, parent.id);
+        return comment.post === parent.id
+      });
     }
   },
   User: {
@@ -139,6 +149,25 @@ const resolvers = {
         // console.log(parent, post);
         return parent.id === post.author;
         // return post.author === parent.id
+      });
+    },
+    comments(parent, args, ctx, info) {
+      // console.log(parent)
+      return dummyData.comments.filter(comment => {
+        return comment.author === parent.id;
+      });
+    }
+  },
+  Comment: {
+    author(parent, args, ctx, info) {
+      return dummyData.usersArray.find(user => {
+        return parent.author === user.id;
+      });
+    },
+    post(parent, args, ctx, info) {
+      return dummyData.postsArray.find(post => {
+        // console.log(parent.post === post.id);
+        return parent.post === post.id;
       });
     }
   }
@@ -172,21 +201,21 @@ var dummyData = {
   ],
   postsArray: [
     {
-      id: `!@$d6web8`,
+      id: `post1`,
       title: "This is a post title!",
       body: "and this...is the body of the post that was posted",
       published: true,
       author: "11"
     },
     {
-      id: `237fdf78gdyfb`,
+      id: `post2`,
       title: "What? Coding? Urk.",
       body: "this common reaction is unfortunate....",
       published: false,
       author: "11"
     },
     {
-      id: `k8735ybfs`,
+      id: `post3`,
       title: "What happened to Right Said Fred?",
       body: "I was deeply dippy about some of their songs...",
       published: true,
@@ -195,16 +224,22 @@ var dummyData = {
   ],
   comments: [
     {
-      text: 'this is comment #1',
-      id: 'comm1'
+      text: "this is comment #1",
+      id: "comm1",
+      author: "11",
+      post: "post1"
     },
     {
-      text: 'this is comment #2',
-      id: 'comm2'
+      text: "this is comment #2",
+      id: "comm2",
+      author: "22",
+      post: "post2"
     },
     {
-      text: 'this is comment #3',
-      id: 'comm3'
+      text: "this is comment #3",
+      id: "comm3",
+      author: "33",
+      post: "post3"
     }
   ]
 };
