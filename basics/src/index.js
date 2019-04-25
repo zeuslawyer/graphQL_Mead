@@ -1,5 +1,4 @@
 import { GraphQLServer } from "graphql-yoga";
-import { ADDRCONFIG } from "dns";
 
 // REFERENCE playground: https://graphql-demo.mead.io/
 
@@ -16,11 +15,12 @@ const typeDefs = `
         me: User!
         post: Post!
         users (name: String) : [User!]!
-        posts (title: String) : [Post!]!
+        posts (titleOrBody: String) : [Post!]!
         greeting(name: String): String!
         add(a: Float!, b: Float!): Float!
         addFloats(numbers: [Float!]!): Float!
         grades: [Int!]!
+        comments(id: ID) : [Comment!]!
     }
 
     type User {
@@ -28,14 +28,20 @@ const typeDefs = `
       name: String!
       email: String!
       age: Int
+      posts: [Post!]!
     }
 
     type Post {
-      id: ID!,
+      id: ID!
       title: String!
       body: String!
       published: Boolean!,
-      author: String
+      author: User!
+    }
+
+    type Comment {
+      id: ID!
+      text: String!
     }
 `;
 
@@ -48,20 +54,10 @@ const typeDefs = `
 const resolvers = {
   Query: {
     me() {
-      return {
-        id: "23ruj",
-        name: "Zubin Pratap",
-        email: "zubin@fakemail.com"
-      };
+      return dummyData.usersArray[0];
     },
     post() {
-      return {
-        id: `!@$d6web8`,
-        title: "This is a post title!",
-        body: "and this...is the body of the post that was posted",
-        published: true,
-        author: "Zubin Pratap"
-      };
+      return dummyData.postsArray[0];
     },
     users(parent, args, ctx, info) {
       //if no query params from client
@@ -76,17 +72,20 @@ const resolvers = {
 
     posts(parent, args, ctx, info) {
       // if no title query param
-      if (!args.title) {
+      if (!args.titleOrBody) {
         return dummyData.postsArray;
       }
 
-      return dummyData.postsArray.filter((post)=>{
-        return post.title.toLowerCase().includes(args.title.toLowerCase())
-      })
+      return dummyData.postsArray.filter(post => {
+        let query = args.titleOrBody.toLowerCase();
+        let titleMatches = post.title.toLowerCase().includes(query);
+        let bodyMatches = post.body.toLowerCase().includes(query);
+        return titleMatches || bodyMatches;
+      });
     },
 
     greeting(parent, args, ctx, info) {
-      console.log(parent, args, ctx, info);
+      // console.log(parent, args, ctx, info);
       if (args.name) {
         return `Hello, ${args.name}!`;
       }
@@ -112,9 +111,39 @@ const resolvers = {
       return args.numbers.reduce((accum, currentVal) => {
         return accum + currentVal;
       });
+    },
+
+    comments(parent, args, ctx, info){
+      //match query param if it exists
+      if (args.id){
+        return dummyData.comments.filter(comm =>{
+          return args.id === comm.id
+        })
+      }
+      //else
+      return dummyData.comments
     }
-    //end of resolvers object
+  },
+
+  //RELATIONAL DATA
+  Post: {
+    author(parent, args, ctx, info) {
+      return dummyData.usersArray.find(user => {
+        return user.id === parent.author;
+      });
+    }
+  },
+  User: {
+    posts(parent, args, ctx, info) {
+      return dummyData.postsArray.filter(post => {
+        // console.log(parent, post);
+        return parent.id === post.author;
+        // return post.author === parent.id
+      });
+    }
   }
+
+  //end of resolvers object
 };
 
 const server = new GraphQLServer({ typeDefs, resolvers });
@@ -125,17 +154,17 @@ server.start(() => {
 var dummyData = {
   usersArray: [
     {
-      id: "23ruj",
+      id: "11",
       name: "Zubin Pratap",
       email: "zubin@fakemail.com"
     },
     {
-      id: "457yhdf",
+      id: "22",
       name: "Rowena Horne",
       email: "rowena@fakemail.com"
     },
     {
-      id: "983hgd023r",
+      id: "33",
       name: "Maggie Hound",
       email: "maggie@fakemail.com",
       age: 13
@@ -147,21 +176,35 @@ var dummyData = {
       title: "This is a post title!",
       body: "and this...is the body of the post that was posted",
       published: true,
-      author: "Zubin Pratap"
+      author: "11"
     },
     {
       id: `237fdf78gdyfb`,
       title: "What? Coding? Urk.",
       body: "this common reaction is unfortunate....",
       published: false,
-      author: "Zubin Pratap"
+      author: "11"
     },
     {
       id: `k8735ybfs`,
       title: "What happened to Right Said Fred?",
       body: "I was deeply dippy about some of their songs...",
       published: true,
-      author: "Maggie Hound"
+      author: "33"
+    }
+  ],
+  comments: [
+    {
+      text: 'this is comment #1',
+      id: 'comm1'
+    },
+    {
+      text: 'this is comment #2',
+      id: 'comm2'
+    },
+    {
+      text: 'this is comment #3',
+      id: 'comm3'
     }
   ]
 };
