@@ -9,9 +9,28 @@ const typeDefs = `
     }
 
     type Mutation {
-      createUser(name: String!, email: String!, age: Int) : User!
-      createPost(title:String!, body: String!, published: Boolean, authorID: ID!): Post!
-      createComment(text: String!, authorID: ID!, postID: ID!): Comment!
+      createUser(userData: CreateUserInputs) : User!
+      createPost(postData: CreatePostInputs): Post!
+      createComment(commentData: CreateCommentInputs): Comment!
+    }
+
+    input CreateUserInputs {
+      name: String!
+      email: String!
+      age: Int
+    }
+
+    input CreatePostInputs {
+      title: String!
+      body: String!
+      published: Boolean
+      authorID: ID!
+    }
+    
+    input CreateCommentInputs {
+      text: String!
+      authorID: ID!
+      postID: ID!
     }
 
     type User {
@@ -81,7 +100,7 @@ const resolvers = {
     createUser(parent, args, ctx, info) {
       //check if email already exists
       const emailExists = dummyData.usersArray.some(user => {
-        return user.email === args.email;
+        return user.email === args.userData.email;
       });
 
       if (emailExists) {
@@ -91,14 +110,14 @@ const resolvers = {
       //if new user...
       const user = {
         id: uuidv4(),
-        ...args
+        ...args.userData
       };
       dummyData.usersArray.push(user);
       return user;
     },
 
     createPost(parent, args, ctx, info) {
-      const {title, body, published, authorID} = args;
+      const {title, body, published, authorID} = args.postData;
 
       // check if author exists
       const authorExists = dummyData.usersArray.some(user => {
@@ -123,7 +142,7 @@ const resolvers = {
     },
 
     createComment(parent, args, ctx, info) {
-      const { text, authorID, postID } = args;
+      const { text, authorID, postID } = args.commentData;
 
       const authorExists = dummyData.usersArray.some((user) =>  user.id === authorID );
 
