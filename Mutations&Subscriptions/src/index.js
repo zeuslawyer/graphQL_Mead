@@ -1,5 +1,5 @@
 import { GraphQLServer } from "../node_modules/graphql-yoga/dist";
-import uuidv4 from 'uuid/v4'
+import uuidv4 from "uuid/v4";
 
 const typeDefs = `
     type Query {  
@@ -10,6 +10,8 @@ const typeDefs = `
 
     type Mutation {
       createUser(name: String!, email: String!, age: Int) : User!
+      createPost(title:String!, body: String!, published: Boolean, authorID: ID!): Post!
+      createComment(text: String!, authorID: ID!, postID: ID!): Comment!
     }
 
     type User {
@@ -36,7 +38,7 @@ const typeDefs = `
       author: User!
       post: Post!
     }
-`
+`;
 
 const resolvers = {
   Query: {
@@ -75,29 +77,74 @@ const resolvers = {
       return dummyData.comments;
     }
   },
-  Mutation : {
-    createUser(parent, args, ctx, info){
-      const {name, email, age} = args;
+  Mutation: {
+    createUser(parent, args, ctx, info) {
+      const { name, email, age } = args;
 
       //check if email already exists
-      const emailExists = dummyData.usersArray.some((user)=>{
+      const emailExists = dummyData.usersArray.some(user => {
         return user.email === email;
-      })
+      });
 
       if (emailExists) {
-        throw new Error("Email aready registered.")
+        throw new Error("Email aready registered.");
       }
-      
+
       //if new user...
-      
       const user = {
         id: uuidv4(),
         name,
         email,
         age
-      }
-      dummyData.usersArray.push(user)
+      };
+      dummyData.usersArray.push(user);
       return user;
+    },
+
+    createPost(parent, args, ctx, info) {
+      const { title, body, authorID, published } = args;
+
+      // check if author exists
+      const authorExists = dummyData.usersArray.some(user => {
+        return user.id === authorID;
+      });
+
+      if (!authorExists) {
+        throw new Error("You are not a registered user.");
+      }
+
+      // user is registered so create new post...
+      const newPost = {
+        id: uuidv4(),
+        title: title || "sample title",
+        body: body || "sample body...",
+        published: published || false,
+        author: authorID
+      };
+      dummyData.postsArray.push(newPost);
+      return newPost;
+    },
+
+    createComment(parent, args, ctx, info) {
+      const { text, authorID, postID } = args;
+
+      const authorExists = dummyData.usersArray.some((user) =>  user.id === authorID );
+
+      const postPublished = dummyData.postsArray.some((post)=> post.id===postID && post.published)
+
+      if (!authorExists) throw new Error("User not found");
+      if ( !postPublished) throw new Error("Unable to find post");
+
+      //else if user is registered, create & save comment
+      const newComment = {
+        id: '_com'+uuidv4(),
+        text,
+        author: authorID,
+        post: postID
+      };
+      dummyData.comments.push(newComment);
+
+      return newComment;
     }
   },
 
@@ -109,6 +156,7 @@ const resolvers = {
       });
     },
     comments(parent, args, ctx, info) {
+      // console.log(parent);
       return dummyData.comments.filter(comment => {
         return comment.post === parent.id;
       });
