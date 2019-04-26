@@ -1,26 +1,15 @@
-import { GraphQLServer } from "graphql-yoga";
-
-// REFERENCE playground: https://graphql-demo.mead.io/
-
-/**
-    type definitions AKA schema - data structures and types. 
-    Written in the GraphQL query lang, wrapped in back ticks.
-
-    Query -> operation type. ->   always returns a String type
-    Other types incl mutation.
-*/
+import { GraphQLServer } from "../node_modules/graphql-yoga/dist";
+import uuidv4 from 'uuid/v4'
 
 const typeDefs = `
-    type Query {            
-        me: User!
-        post: Post!
+    type Query {  
         users (name: String) : [User!]!
         posts (titleOrBody: String) : [Post!]!
-        greeting(name: String): String!
-        add(a: Float!, b: Float!): Float!
-        addFloats(numbers: [Float!]!): Float!
-        grades: [Int!]!
         comments(id: ID) : [Comment!]!
+    }
+
+    type Mutation {
+      createUser(name: String!, email: String!, age: Int) : User!
     }
 
     type User {
@@ -47,22 +36,10 @@ const typeDefs = `
       author: User!
       post: Post!
     }
-`;
-
-/* 
-    Resolvers (methods that implement operations and fetch/return data). 
-    Is an object with methods as properties
-    follows the schema in type definitions 
-*/
+`
 
 const resolvers = {
   Query: {
-    me() {
-      return dummyData.usersArray[0];
-    },
-    post() {
-      return dummyData.postsArray[0];
-    },
     users(parent, args, ctx, info) {
       //if no query params from client
       if (!args.name) {
@@ -87,36 +64,6 @@ const resolvers = {
         return titleMatches || bodyMatches;
       });
     },
-
-    greeting(parent, args, ctx, info) {
-      // console.log(parent, args, ctx, info);
-      if (args.name) {
-        return `Hello, ${args.name}!`;
-      }
-
-      //else
-      return "Hello, stranger!";
-    },
-
-    add() {
-      let args = arguments[1];
-
-      return args.a + args.b;
-    },
-
-    grades() {
-      return [90, 67, 88];
-    },
-
-    addFloats(parent, args, ctx, info) {
-      if (args.numbers === 0) return 0;
-
-      //else
-      return args.numbers.reduce((accum, currentVal) => {
-        return accum + currentVal;
-      });
-    },
-
     comments(parent, args, ctx, info) {
       //match query param if it exists
       if (args.id) {
@@ -126,6 +73,31 @@ const resolvers = {
       }
       //else
       return dummyData.comments;
+    }
+  },
+  Mutation : {
+    createUser(parent, args, ctx, info){
+      const {name, email, age} = args;
+
+      //check if email already exists
+      const emailExists = dummyData.usersArray.some((user)=>{
+        return user.email === email;
+      })
+
+      if (emailExists) {
+        throw new Error("Email aready registered.")
+      }
+      
+      //if new user...
+      
+      const user = {
+        id: uuidv4(),
+        name,
+        email,
+        age
+      }
+      dummyData.usersArray.push(user)
+      return user;
     }
   },
 
