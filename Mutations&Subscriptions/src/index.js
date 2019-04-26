@@ -79,11 +79,9 @@ const resolvers = {
   },
   Mutation: {
     createUser(parent, args, ctx, info) {
-      const { name, email, age } = args;
-
       //check if email already exists
       const emailExists = dummyData.usersArray.some(user => {
-        return user.email === email;
+        return user.email === args.email;
       });
 
       if (emailExists) {
@@ -93,16 +91,14 @@ const resolvers = {
       //if new user...
       const user = {
         id: uuidv4(),
-        name,
-        email,
-        age
+        ...args
       };
       dummyData.usersArray.push(user);
       return user;
     },
 
     createPost(parent, args, ctx, info) {
-      const { title, body, authorID, published } = args;
+      const {title, body, published, authorID} = args;
 
       // check if author exists
       const authorExists = dummyData.usersArray.some(user => {
@@ -116,11 +112,12 @@ const resolvers = {
       // user is registered so create new post...
       const newPost = {
         id: uuidv4(),
-        title: title || "sample title",
-        body: body || "sample body...",
-        published: published || false,
-        author: authorID
+        body,
+        author: authorID,
+        title,
+        published
       };
+
       dummyData.postsArray.push(newPost);
       return newPost;
     },
