@@ -14,6 +14,7 @@ const typeDefs = `
       createComment(commentData: CreateCommentInputs): Comment!
       deleteUser(id: ID!): User!
       deletePost(id: ID!) : Post!
+      deleteComment(id: ID!): Comment!
     }
 
     input CreateUserInputs {
@@ -172,7 +173,9 @@ const resolvers = {
     deleteUser(parent, args, ctx, info) {
       //check valid user
       // const userExists = dummyData.usersArray.some(user => user.id === args.id);
-      const userIndex = dummyData.usersArray.findIndex(user => user.id === args.id);
+      const userIndex = dummyData.usersArray.findIndex(
+        user => user.id === args.id
+      );
 
       if (userIndex === -1) {
         throw new Error(`No user with  ID ${args.id} exists.`);
@@ -180,25 +183,62 @@ const resolvers = {
 
       //else
       const deletedUsers = dummyData.usersArray.splice(userIndex, 1);
-      
+
       //retain posts and comments authored by others
-      const otherPosts = dummyData.postsArray.filter(post=> post.author != args.id)
-      let otherComments = dummyData.comments.filter(comment=>  comment.author != args.id)
+      const otherPosts = dummyData.postsArray.filter(
+        post => post.author != args.id
+      );
+      let otherComments = dummyData.comments.filter(
+        comment => comment.author != args.id
+      );
 
       // filter remaining comments to remove others' comments on posts that no longer exist
-      otherPosts.forEach(post=>{
-        otherComments = otherComments.filter(comment=> comment.post === post.id)
-
+      otherPosts.forEach(post => {
+        otherComments = otherComments.filter(
+          comment => comment.post === post.id
+        );
       });
 
       dummyData.comments = otherComments;
-      dummyData.postsArray = otherPosts
+      dummyData.postsArray = otherPosts;
 
       // return the deleted user object
       return deletedUsers[0];
     },
 
-    
+    deletePost(parent, args, ctx, info) {
+      //check if post exists
+      const postIndex = dummyData.postsArray.findIndex(
+        post => post.id === args.id
+      );
+      if (postIndex === -1) {
+        throw new Error("Post not found.");
+      }
+
+      //remove all comments relating to deleted post
+      dummyData.comments = dummyData.comments.filter(
+        comment => comment.post != args.id
+      );
+
+      //update DB
+      const removedPost = dummyData.postsArray.splice(postIndex, 1);
+
+      return removedPost[0];
+    },
+
+    deleteComment(parent, args, ctx, info) {
+      //check comment exists
+      const commentIndex = dummyData.comments.findIndex(
+        comment => comment.id === args.id
+      );
+
+      if (commentIndex === -1) {
+        throw new Error("Comment not found.");
+      }
+      //update DB & return the deleted comment
+      const deletedComment = dummyData.comments.splice(commentIndex, 1)
+      return deletedComment[0];
+    }
   },
 
   //RELATIONAL DATA
