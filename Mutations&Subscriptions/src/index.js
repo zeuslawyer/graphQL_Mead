@@ -1,49 +1,50 @@
 import { GraphQLServer } from "../node_modules/graphql-yoga/dist";
 import uuidv4 from "uuid/v4";
-import {dummyData} from './db/db'
-
+import { dummyData } from "./db/db";
 
 const resolvers = {
   Query: {
-    users(parent, args, ctx, info) {
+    users(parent, args, { db }, info) {
       //if no query params from client
       if (!args.name) {
-        return dummyData.usersArray;
+        return db.usersArray;
       }
       //else
-      return dummyData.usersArray.filter(user => {
+      return db.usersArray.filter(user => {
         return user.name.toLowerCase().includes(args.name.toLowerCase());
       });
     },
 
-    posts(parent, args, ctx, info) {
+    posts(parent, args, { db }, info) {
       // if no title query param
       if (!args.titleOrBody) {
-        return dummyData.postsArray;
+        return db.postsArray;
       }
 
-      return dummyData.postsArray.filter(post => {
+      return db.postsArray.filter(post => {
         let query = args.titleOrBody.toLowerCase();
         let titleMatches = post.title.toLowerCase().includes(query);
         let bodyMatches = post.body.toLowerCase().includes(query);
         return titleMatches || bodyMatches;
       });
     },
-    comments(parent, args, ctx, info) {
+
+    comments(parent, args, { db }, info) {
       //match query param if it exists
       if (args.id) {
-        return dummyData.comments.filter(comm => {
+        return db.comments.filter(comm => {
           return args.id === comm.id;
         });
       }
       //else
-      return dummyData.comments;
+      return db.comments;
     }
   },
+
   Mutation: {
-    createUser(parent, args, ctx, info) {
+    createUser(parent, args, { db }, info) {
       //check if email already exists
-      const emailExists = dummyData.usersArray.some(user => {
+      const emailExists = db.usersArray.some(user => {
         return user.email === args.userData.email;
       });
 
@@ -56,15 +57,15 @@ const resolvers = {
         id: uuidv4(),
         ...args.userData
       };
-      dummyData.usersArray.push(user);
+      db.usersArray.push(user);
       return user;
     },
 
-    createPost(parent, args, ctx, info) {
+    createPost(parent, args, { db }, info) {
       const { title, body, published, authorID } = args.postData;
 
       // check if author exists
-      const authorExists = dummyData.usersArray.some(user => {
+      const authorExists = db.usersArray.some(user => {
         return user.id === authorID;
       });
 
@@ -81,18 +82,16 @@ const resolvers = {
         published
       };
 
-      dummyData.postsArray.push(newPost);
+      db.postsArray.push(newPost);
       return newPost;
     },
 
-    createComment(parent, args, ctx, info) {
+    createComment(parent, args, { db }, info) {
       const { text, authorID, postID } = args.commentData;
 
-      const authorExists = dummyData.usersArray.some(
-        user => user.id === authorID
-      );
+      const authorExists = db.usersArray.some(user => user.id === authorID);
 
-      const postPublished = dummyData.postsArray.some(
+      const postPublished = db.postsArray.some(
         post => post.id === postID && post.published
       );
 
@@ -106,15 +105,14 @@ const resolvers = {
         author: authorID,
         post: postID
       };
-      dummyData.comments.push(newComment);
 
+      db.comments.push(newComment);
       return newComment;
     },
 
-    deleteUser(parent, args, ctx, info) {
+    deleteUser(parent, args, {db}, info) {
       //check valid user
-      // const userExists = dummyData.usersArray.some(user => user.id === args.id);
-      const userIndex = dummyData.usersArray.findIndex(
+      const userIndex = db.usersArray.findIndex(
         user => user.id === args.id
       );
 
@@ -123,13 +121,13 @@ const resolvers = {
       }
 
       //else
-      const deletedUsers = dummyData.usersArray.splice(userIndex, 1);
+      const deletedUsers = db.usersArray.splice(userIndex, 1);
 
       //retain posts and comments authored by others
-      const otherPosts = dummyData.postsArray.filter(
+      const otherPosts = db.postsArray.filter(
         post => post.author != args.id
       );
-      let otherComments = dummyData.comments.filter(
+      let otherComments = db.comments.filter(
         comment => comment.author != args.id
       );
 
@@ -140,16 +138,16 @@ const resolvers = {
         );
       });
 
-      dummyData.comments = otherComments;
-      dummyData.postsArray = otherPosts;
+      db.comments = otherComments;
+      db.postsArray = otherPosts;
 
       // return the deleted user object
       return deletedUsers[0];
     },
 
-    deletePost(parent, args, ctx, info) {
+    deletePost(parent, args, {db}, info) {
       //check if post exists
-      const postIndex = dummyData.postsArray.findIndex(
+      const postIndex = db.postsArray.findIndex(
         post => post.id === args.id
       );
       if (postIndex === -1) {
@@ -157,19 +155,19 @@ const resolvers = {
       }
 
       //remove all comments relating to deleted post
-      dummyData.comments = dummyData.comments.filter(
+      db.comments = db.comments.filter(
         comment => comment.post != args.id
       );
 
       //update DB
-      const removedPost = dummyData.postsArray.splice(postIndex, 1);
+      const removedPost = db.postsArray.splice(postIndex, 1);
 
       return removedPost[0];
     },
 
-    deleteComment(parent, args, ctx, info) {
+    deleteComment(parent, args, {db}, info) {
       //check comment exists
-      const commentIndex = dummyData.comments.findIndex(
+      const commentIndex = db.comments.findIndex(
         comment => comment.id === args.id
       );
 
@@ -177,48 +175,48 @@ const resolvers = {
         throw new Error("Comment not found.");
       }
       //update DB & return the deleted comment
-      const deletedComment = dummyData.comments.splice(commentIndex, 1);
+      const deletedComment = db.comments.splice(commentIndex, 1);
       return deletedComment[0];
     }
   },
 
-  //RELATIONAL DATA
+  //RELATIONAL DATA - resolvers for each CUSTOM data type
   Post: {
-    author(parent, args, ctx, info) {
-      return dummyData.usersArray.find(user => {
+    author(parent, args, {db}, info) {
+      return db.usersArray.find(user => {
         return user.id === parent.author;
       });
     },
-    comments(parent, args, ctx, info) {
+    comments(parent, args, {db}, info) {
       // console.log(parent);
-      return dummyData.comments.filter(comment => {
+      return db.comments.filter(comment => {
         return comment.post === parent.id;
       });
     }
   },
   User: {
-    posts(parent, args, ctx, info) {
-      return dummyData.postsArray.filter(post => {
+    posts(parent, args, {db}, info) {
+      return db.postsArray.filter(post => {
         // console.log(parent, post);
         return parent.id === post.author;
         // return post.author === parent.id
       });
     },
-    comments(parent, args, ctx, info) {
+    comments(parent, args, {db}, info) {
       // console.log(parent)
-      return dummyData.comments.filter(comment => {
+      return db.comments.filter(comment => {
         return comment.author === parent.id;
       });
     }
   },
   Comment: {
-    author(parent, args, ctx, info) {
-      return dummyData.usersArray.find(user => {
+    author(parent, args, {db}, info) {
+      return db.usersArray.find(user => {
         return parent.author === user.id;
       });
     },
-    post(parent, args, ctx, info) {
-      return dummyData.postsArray.find(post => {
+    post(parent, args, {db}, info) {
+      return db.postsArray.find(post => {
         // console.log(parent.post === post.id);
         return parent.post === post.id;
       });
@@ -229,13 +227,14 @@ const resolvers = {
 };
 
 const GQLServerConfig = {
-  typeDefs: "./src/schema.graphql",   //path must be absolute from root
-  resolvers
+  typeDefs: "./src/schema.graphql", //path must be absolute from root
+  resolvers,
+  context: {
+    db: dummyData // context here is = ctx arg passed to all resolvers
+  }
 };
 
 const server = new GraphQLServer(GQLServerConfig);
 server.start(() => {
   console.log("Server running on default port: 4000");
 });
-
-
