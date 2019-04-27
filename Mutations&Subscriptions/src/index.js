@@ -12,6 +12,8 @@ const typeDefs = `
       createUser(userData: CreateUserInputs) : User!
       createPost(postData: CreatePostInputs): Post!
       createComment(commentData: CreateCommentInputs): Comment!
+      deleteUser(id: ID!): User!
+      deletePost(id: ID!) : Post!
     }
 
     input CreateUserInputs {
@@ -117,7 +119,7 @@ const resolvers = {
     },
 
     createPost(parent, args, ctx, info) {
-      const {title, body, published, authorID} = args.postData;
+      const { title, body, published, authorID } = args.postData;
 
       // check if author exists
       const authorExists = dummyData.usersArray.some(user => {
@@ -144,16 +146,20 @@ const resolvers = {
     createComment(parent, args, ctx, info) {
       const { text, authorID, postID } = args.commentData;
 
-      const authorExists = dummyData.usersArray.some((user) =>  user.id === authorID );
+      const authorExists = dummyData.usersArray.some(
+        user => user.id === authorID
+      );
 
-      const postPublished = dummyData.postsArray.some((post)=> post.id===postID && post.published)
+      const postPublished = dummyData.postsArray.some(
+        post => post.id === postID && post.published
+      );
 
       if (!authorExists) throw new Error("User not found");
-      if ( !postPublished) throw new Error("Unable to find post");
+      if (!postPublished) throw new Error("Unable to find post");
 
       //else if user is registered, create & save comment
       const newComment = {
-        id: '_com'+uuidv4(),
+        id: "_com" + uuidv4(),
         text,
         author: authorID,
         post: postID
@@ -161,7 +167,38 @@ const resolvers = {
       dummyData.comments.push(newComment);
 
       return newComment;
-    }
+    },
+
+    deleteUser(parent, args, ctx, info) {
+      //check valid user
+      // const userExists = dummyData.usersArray.some(user => user.id === args.id);
+      const userIndex = dummyData.usersArray.findIndex(user => user.id === args.id);
+
+      if (userIndex === -1) {
+        throw new Error(`No user with  ID ${args.id} exists.`);
+      }
+
+      //else
+      const deletedUsers = dummyData.usersArray.splice(userIndex, 1);
+      
+      //retain posts and comments authored by others
+      const otherPosts = dummyData.postsArray.filter(post=> post.author != args.id)
+      let otherComments = dummyData.comments.filter(comment=>  comment.author != args.id)
+
+      // filter remaining comments to remove others' comments on posts that no longer exist
+      otherPosts.forEach(post=>{
+        otherComments = otherComments.filter(comment=> comment.post === post.id)
+
+      });
+
+      dummyData.comments = otherComments;
+      dummyData.postsArray = otherPosts
+
+      // return the deleted user object
+      return deletedUsers[0];
+    },
+
+    
   },
 
   //RELATIONAL DATA
@@ -215,7 +252,7 @@ server.start(() => {
   console.log("Server running on default port: 4000");
 });
 
-var dummyData = {
+let dummyData = {
   usersArray: [
     {
       id: "11",
