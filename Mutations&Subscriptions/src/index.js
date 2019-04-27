@@ -1,66 +1,7 @@
 import { GraphQLServer } from "../node_modules/graphql-yoga/dist";
 import uuidv4 from "uuid/v4";
+import {dummyData} from './db/db'
 
-const typeDefs = `
-    type Query {  
-        users (name: String) : [User!]!
-        posts (titleOrBody: String) : [Post!]!
-        comments(id: ID) : [Comment!]!
-    }
-
-    type Mutation {
-      createUser(userData: CreateUserInputs) : User!
-      createPost(postData: CreatePostInputs): Post!
-      createComment(commentData: CreateCommentInputs): Comment!
-      deleteUser(id: ID!): User!
-      deletePost(id: ID!) : Post!
-      deleteComment(id: ID!): Comment!
-    }
-
-    input CreateUserInputs {
-      name: String!
-      email: String!
-      age: Int
-    }
-
-    input CreatePostInputs {
-      title: String!
-      body: String!
-      published: Boolean
-      authorID: ID!
-    }
-    
-    input CreateCommentInputs {
-      text: String!
-      authorID: ID!
-      postID: ID!
-    }
-
-    type User {
-      id: ID!
-      name: String!
-      email: String!
-      age: Int
-      posts: [Post!]!
-      comments: [Comment!]!
-    }
-
-    type Post {
-      id: ID!
-      title: String!
-      body: String!
-      published: Boolean!,
-      author: User!
-      comments: [Comment!]!
-    }
-
-    type Comment {
-      id: ID!
-      text: String!
-      author: User!
-      post: Post!
-    }
-`;
 
 const resolvers = {
   Query: {
@@ -236,7 +177,7 @@ const resolvers = {
         throw new Error("Comment not found.");
       }
       //update DB & return the deleted comment
-      const deletedComment = dummyData.comments.splice(commentIndex, 1)
+      const deletedComment = dummyData.comments.splice(commentIndex, 1);
       return deletedComment[0];
     }
   },
@@ -287,71 +228,14 @@ const resolvers = {
   //end of resolvers object
 };
 
-const server = new GraphQLServer({ typeDefs, resolvers });
+const GQLServerConfig = {
+  typeDefs: "./src/schema.graphql",   //path must be absolute from root
+  resolvers
+};
+
+const server = new GraphQLServer(GQLServerConfig);
 server.start(() => {
   console.log("Server running on default port: 4000");
 });
 
-let dummyData = {
-  usersArray: [
-    {
-      id: "11",
-      name: "Zubin Pratap",
-      email: "zubin@fakemail.com"
-    },
-    {
-      id: "22",
-      name: "Rowena Horne",
-      email: "rowena@fakemail.com"
-    },
-    {
-      id: "33",
-      name: "Maggie Hound",
-      email: "maggie@fakemail.com",
-      age: 13
-    }
-  ],
-  postsArray: [
-    {
-      id: `post1`,
-      title: "This is a post title!",
-      body: "and this...is the body of the post that was posted",
-      published: true,
-      author: "11"
-    },
-    {
-      id: `post2`,
-      title: "What? Coding? Urk.",
-      body: "this common reaction is unfortunate....",
-      published: false,
-      author: "11"
-    },
-    {
-      id: `post3`,
-      title: "What happened to Right Said Fred?",
-      body: "I was deeply dippy about some of their songs...",
-      published: true,
-      author: "33"
-    }
-  ],
-  comments: [
-    {
-      text: "this is comment #1",
-      id: "comm1",
-      author: "11",
-      post: "post1"
-    },
-    {
-      text: "this is comment #2",
-      id: "comm2",
-      author: "22",
-      post: "post2"
-    },
-    {
-      text: "this is comment #3",
-      id: "comm3",
-      author: "33",
-      post: "post3"
-    }
-  ]
-};
+
