@@ -53,10 +53,12 @@ const Mutation = {
     const { id, userData } = args;
 
     //test if email already exists
-    if(userData.email) {
-      const emailExists = ctx.db.usersArray.some(user => user.email === userData.email);
+    if (userData.email) {
+      const emailExists = ctx.db.usersArray.some(
+        user => user.email === userData.email
+      );
 
-       if ( emailExists ) {
+      if (emailExists) {
         throw new Error("A user with that email already exists.");
       }
     }
@@ -100,8 +102,25 @@ const Mutation = {
     return newPost;
   },
 
-  updatePost(parent, {title, body, post}, {ctx}, info) {
+  updatePost(parent, args, { db }, info) {
+    let { title, body, published } = args.postData;
 
+    //check that post exists
+    const postIndex = db.postsArray.findIndex(post => post.id === args.id);
+    if (postIndex === -1) {
+      throw new Error("No such post found");
+    }
+
+    //create new post object & check if any update fields are EMPTY
+    const currentPost = db.postsArray[postIndex];
+    title = title || currentPost.title
+    body = body || currentPost.body
+    published = published || currentPost.published
+    
+    const updatedPost = { ...currentPost, title , body, published };
+    db.postsArray[postIndex] = updatedPost;
+
+    return updatedPost;
   },
 
   deletePost(parent, args, { db }, info) {
