@@ -1,18 +1,17 @@
 import { GraphQLServer } from "../node_modules/graphql-yoga/dist";
 import { dummyData } from "./db/db";
-import Query from './resolvers/Query'
-import Mutation from './resolvers/Mutation'
-import Post from './resolvers/Post'
-import User from './resolvers/User'
-import Comment from './resolvers/Comment'
-
+import Query from "./resolvers/Query";
+import Mutation from "./resolvers/Mutation";
+import Post from "./resolvers/Post";
+import User from "./resolvers/User";
+import Comment from "./resolvers/Comment";
 
 const resolvers = {
- Query,
- Mutation,
- Post,
- User,
- Comment
+  Query,
+  Mutation,
+  Post,
+  User,
+  Comment
 };
 
 const GQLServerConfig = {
