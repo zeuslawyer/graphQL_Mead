@@ -1,4 +1,4 @@
-import uuidv4 from 'uuid/v4'
+import uuidv4 from "uuid/v4";
 
 const Mutation = {
   createUser(parent, args, { db }, info) {
@@ -18,55 +18,6 @@ const Mutation = {
     };
     db.usersArray.push(user);
     return user;
-  },
-
-  createPost(parent, args, { db }, info) {
-    const { title, body, published, authorID } = args.postData;
-
-    // check if author exists
-    const authorExists = db.usersArray.some(user => {
-      return user.id === authorID;
-    });
-
-    if (!authorExists) {
-      throw new Error("You are not a registered user.");
-    }
-
-    // user is registered so create new post...
-    const newPost = {
-      id: uuidv4(),
-      body,
-      author: authorID,
-      title,
-      published
-    };
-
-    db.postsArray.push(newPost);
-    return newPost;
-  },
-
-  createComment(parent, args, { db }, info) {
-    const { text, authorID, postID } = args.commentData;
-
-    const authorExists = db.usersArray.some(user => user.id === authorID);
-
-    const postPublished = db.postsArray.some(
-      post => post.id === postID && post.published
-    );
-
-    if (!authorExists) throw new Error("User not found");
-    if (!postPublished) throw new Error("Unable to find post");
-
-    //else if user is registered, create & save comment
-    const newComment = {
-      id: "_com" + uuidv4(),
-      text,
-      author: authorID,
-      post: postID
-    };
-
-    db.comments.push(newComment);
-    return newComment;
   },
 
   deleteUser(parent, args, { db }, info) {
@@ -98,6 +49,61 @@ const Mutation = {
     return deletedUsers[0];
   },
 
+  updateUser(parent, args, ctx, info) {
+    const { id, userData } = args;
+
+    //test if email already exists
+    if(userData.email) {
+      const emailExists = ctx.db.usersArray.some(user => user.email === userData.email);
+
+       if ( emailExists ) {
+        throw new Error("A user with that email already exists.");
+      }
+    }
+
+    //find user
+    const userIndex = ctx.db.usersArray.findIndex(user => user.id === id);
+
+    if (userIndex === -1) {
+      throw new Error("No such user found.");
+    }
+
+    // update user
+    const updatedUserData = { ...ctx.db.usersArray[userIndex], ...userData };
+    ctx.db.usersArray[userIndex] = updatedUserData;
+
+    return updatedUserData;
+  },
+
+  createPost(parent, args, { db }, info) {
+    const { title, body, published, authorID } = args.postData;
+
+    // check if author exists
+    const authorExists = db.usersArray.some(user => {
+      return user.id === authorID;
+    });
+
+    if (!authorExists) {
+      throw new Error("You are not a registered user.");
+    }
+
+    // user is registered so create new post...
+    const newPost = {
+      id: uuidv4(),
+      body,
+      author: authorID,
+      title,
+      published
+    };
+
+    db.postsArray.push(newPost);
+    return newPost;
+  },
+
+  updatePost(parent, {title, body, post}, {ctx}, info) {
+
+  },
+
   deletePost(parent, args, { db }, info) {
     //check if post exists
     const postIndex = db.postsArray.findIndex(post => post.id === args.id);
@@ -112,6 +118,30 @@ const Mutation = {
     const removedPost = db.postsArray.splice(postIndex, 1);
 
     return removedPost[0];
+  },
+
+  createComment(parent, args, { db }, info) {
+    const { text, authorID, postID } = args.commentData;
+
+    const authorExists = db.usersArray.some(user => user.id === authorID);
+
+    const postPublished = db.postsArray.some(
+      post => post.id === postID && post.published
+    );
+
+    if (!authorExists) throw new Error("User not found");
+    if (!postPublished) throw new Error("Unable to find post");
+
+    //else if user is registered, create & save comment
+    const newComment = {
+      id: "_com" + uuidv4(),
+      text,
+      author: authorID,
+      post: postID
+    };
+
+    db.comments.push(newComment);
+    return newComment;
   },
 
   deleteComment(parent, args, { db }, info) {
