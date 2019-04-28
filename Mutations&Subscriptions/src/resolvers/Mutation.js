@@ -113,11 +113,11 @@ const Mutation = {
 
     //create new post object & check if any update fields are EMPTY
     const currentPost = db.postsArray[postIndex];
-    title = title || currentPost.title
-    body = body || currentPost.body
-    published = published || currentPost.published
-    
-    const updatedPost = { ...currentPost, title , body, published };
+    title = title || currentPost.title;
+    body = body || currentPost.body;
+    published = published || currentPost.published;
+
+    const updatedPost = { ...currentPost, title, body, published };
     db.postsArray[postIndex] = updatedPost;
 
     return updatedPost;
@@ -175,6 +175,25 @@ const Mutation = {
     //update DB & return the deleted comment
     const deletedComment = db.comments.splice(commentIndex, 1);
     return deletedComment[0];
+  },
+
+  updateComment(parent, args, { db }, info) {
+    let { text } = args.commentData;
+
+    //check if comment exists
+    const commentIndex = db.comments.findIndex(comm => comm.id === args.id);
+    if (commentIndex === -1) {
+      throw new Error("Comment not found.");
+    }
+
+    //check that updatd text is not null or undefined
+    const currentComment = db.comments[commentIndex];
+    text = text || currentComment.text;
+
+    //update db
+    db.comments[commentIndex] = { ...currentComment, text };
+
+    return db.comments[commentIndex];
   }
 };
 

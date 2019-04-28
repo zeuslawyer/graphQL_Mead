@@ -1,5 +1,5 @@
 #Operations
-Broadly two types - Queries and Mutations.
+Broadly three types - Queries (Read),  Mutations (create, update, delete) and Subscriptions (subscribing to changes in data).
 
 #### Operation Arguments
 These are used to pass data from the client to server.  There are 4 arguments that get passed to __every__ [resolver](#Resolvers) function. 
@@ -25,7 +25,7 @@ greeting(parent, args, ctx, info ){
 
 
 #typeDefs
-This is how you define the type of __Operations__ and the data types of values retrieved.
+This is how you define the type (schema) of __Operations__ and the data types of values being operated on.
 
 Data in GraphQL fall into two broad categories. They are: 
 1) scalar types (store a single, discrete value). 
