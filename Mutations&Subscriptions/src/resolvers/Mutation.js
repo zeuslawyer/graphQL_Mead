@@ -139,7 +139,7 @@ const Mutation = {
     return removedPost[0];
   },
 
-  createComment(parent, args, { db }, info) {
+  createComment(parent, args, { db, pubsub }, info) {
     const { text, authorID, postID } = args.commentData;
 
     const authorExists = db.usersArray.some(user => user.id === authorID);
@@ -151,7 +151,7 @@ const Mutation = {
     if (!authorExists) throw new Error("User not found");
     if (!postPublished) throw new Error("Unable to find post");
 
-    //else if user is registered, create & save comment
+    //else if user is registered, create & save comment to DB
     const newComment = {
       id: "_com" + uuidv4(),
       text,
@@ -160,6 +160,10 @@ const Mutation = {
     };
 
     db.comments.push(newComment);
+
+    //publish to subscription channel for comments, then return new comment
+    pubsub.publish('comms_for_post_#'+postID, { comment: newComment})
+    
     return newComment;
   },
 
