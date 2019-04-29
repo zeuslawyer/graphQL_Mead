@@ -16,6 +16,35 @@ type Mutation {
     updateComment (id: ID!, commentData: UpdateCommentInputs!) : Comment!
 }
 
+type Subscription{
+  count: Int!
+}
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  age: Int
+  posts: [Post!]!
+  comments: [Comment!]!
+}
+
+type Post {
+  id: ID!
+  title: String!
+  body: String!
+  published: Boolean!,
+  author: User!
+  comments: [Comment!]!
+}
+
+type Comment {
+  id: ID!
+  text: String!
+  author: User!
+  post: Post!
+}
+
 input CreateUserInputs {
     name: String!
     email: String!
@@ -52,27 +81,3 @@ input UpdateCommentInputs {
 }
 
 
-type User {
-  id: ID!
-  name: String!
-  email: String!
-  age: Int
-  posts: [Post!]!
-  comments: [Comment!]!
-}
-
-type Post {
-  id: ID!
-  title: String!
-  body: String!
-  published: Boolean!,
-  author: User!
-  comments: [Comment!]!
-}
-
-type Comment {
-  id: ID!
-  text: String!
-  author: User!
-  post: Post!
-}
