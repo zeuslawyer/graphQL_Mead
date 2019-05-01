@@ -77,10 +77,10 @@ const Mutation = {
     return updatedUserData;
   },
 
-  createPost(parent, args, { db }, info) {
+  createPost(parent, args, { db, pubsub }, info) {
     const { title, body, published, authorID } = args.postData;
 
-    // check if author exists
+    // check if post author registered
     const authorExists = db.usersArray.some(user => {
       return user.id === authorID;
     });
@@ -99,6 +99,12 @@ const Mutation = {
     };
 
     db.postsArray.push(newPost);
+
+    //publish to subscription IF published is set to true
+    if (published) {
+      pubsub.publish(`postchannel`, { post: newPost})
+    }
+    
     return newPost;
   },
 
@@ -144,7 +150,7 @@ const Mutation = {
 
     const authorExists = db.usersArray.some(user => user.id === authorID);
 
-    const postPublished = db.postsArray.some(
+    const postPublished = db.postsArray.some( 
       post => post.id === postID && post.published
     );
 
