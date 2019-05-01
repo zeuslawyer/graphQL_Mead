@@ -101,14 +101,23 @@ const Mutation = {
     db.postsArray.push(newPost);
 
     //publish to subscription IF published is set to true
+    /**
+     * @param string - name of channel, must be identical to what is used in pubsub.asyncIterator()
+     * @param object - object with property that matches name of subscription resolver, and value that matches the return type declared in schema
+     */
     if (published) {
-      pubsub.publish(`postchannel`, { post: newPost})
+      pubsub.publish(`postchannel`, {
+        post: {
+          mutation: "CREATED",
+          data: newPost
+        }
+      });
     }
-    
+
     return newPost;
   },
 
-  updatePost(parent, args, { db }, info) {
+  updatePost(parent, args, { db, pubsub }, info) {
     let { title, body, published } = args.postData;
 
     //check that post exists
@@ -121,15 +130,45 @@ const Mutation = {
     const currentPost = db.postsArray[postIndex];
     title = title || currentPost.title;
     body = body || currentPost.body;
-    published = published || currentPost.published;
+    published = (published === undefined) ? currentPost.published : published;
 
     const updatedPost = { ...currentPost, title, body, published };
+
     db.postsArray[postIndex] = updatedPost;
+
+    // check whether user had toggled 'published status' or has updated something else
+    if (currentPost.published && !updatedPost.published) {
+      // -> unpublished the post
+      //deleted
+      pubsub.publish("postchannel", {
+        post: {
+          mutation: "DELETED",
+          data: currentPost //publish only the removed post because that was authorised to be published
+        }
+      });
+    } else if (!currentPost.published && updatedPost.published) {
+      //-> unpublished post now published
+      //created
+      pubsub.publish("postchannel", {
+        post: {
+          mutation: "CREATED",
+          data: updatedPost
+        }
+      });
+    } else if (updatedPost.published) {
+      //updated
+      pubsub.publish("postchannel", {
+        post: {
+          mutation: "UPDATED ",
+          data: updatedPost
+        }
+      });
+    }
 
     return updatedPost;
   },
 
-  deletePost(parent, args, { db }, info) {
+  deletePost(parent, args, { db, pubsub }, info) {
     //check if post exists
     const postIndex = db.postsArray.findIndex(post => post.id === args.id);
     if (postIndex === -1) {
@@ -139,10 +178,20 @@ const Mutation = {
     //remove all comments relating to deleted post
     db.comments = db.comments.filter(comment => comment.post != args.id);
 
-    //update DB
-    const removedPost = db.postsArray.splice(postIndex, 1);
+    //update DB, using array destructuring
+    const [removedPost] = db.postsArray.splice(postIndex, 1);
 
-    return removedPost[0];
+    //publish deleted post to subscription channel IF its a published post
+    if (removedPost.published) {
+      pubsub.publish("postchannel", {
+        post: {
+          mutation: "DELETED",
+          data: removedPost
+        }
+      });
+    }
+
+    return removedPost;
   },
 
   createComment(parent, args, { db, pubsub }, info) {
@@ -150,7 +199,7 @@ const Mutation = {
 
     const authorExists = db.usersArray.some(user => user.id === authorID);
 
-    const postPublished = db.postsArray.some( 
+    const postPublished = db.postsArray.some(
       post => post.id === postID && post.published
     );
 
@@ -168,8 +217,12 @@ const Mutation = {
     db.comments.push(newComment);
 
     //publish to subscription channel for comments, then return new comment
-    pubsub.publish('comms_for_post_#'+postID, { comment: newComment})
-    
+    /**
+     * @param string - name of channel, must be identical to what is used in pubsub.asyncIterator()
+     * @param object - object with property that matches name of subscription resolver, and value that matches the return type declared in schema
+     */
+    pubsub.publish("comms_for_post_#" + postID, { comment: newComment });
+
     return newComment;
   },
 
