@@ -241,18 +241,18 @@ const Mutation = {
       throw new Error("Comment not found.");
     }
     //update DB & return the deleted comment
-    const deletedComment = db.comments.splice(commentIndex, 1);
+    const [deletedComment] = db.comments.splice(commentIndex, 1);
 
     // publish to subscription
-    pubsub.publish("comms_for_post_#" + deletedComment[0].post, { 
+    pubsub.publish("comms_for_post_#" + deletedComment.post, { 
       comment: {
         mutation: "DELETED",
-        data: deletedComment[0] 
+        data: deletedComment 
       }
      });
 
 
-    return deletedComment[0];
+    return deletedComment;
   },
 
   updateComment(parent, args, { db, pubsub }, info) {
