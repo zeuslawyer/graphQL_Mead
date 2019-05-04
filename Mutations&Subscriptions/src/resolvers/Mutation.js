@@ -130,7 +130,7 @@ const Mutation = {
     const currentPost = db.postsArray[postIndex];
     title = title || currentPost.title;
     body = body || currentPost.body;
-    published = (published === undefined) ? currentPost.published : published;
+    published = published === undefined ? currentPost.published : published;
 
     const updatedPost = { ...currentPost, title, body, published };
 
@@ -221,12 +221,17 @@ const Mutation = {
      * @param string - name of channel, must be identical to what is used in pubsub.asyncIterator()
      * @param object - object with property that matches name of subscription resolver, and value that matches the return type declared in schema
      */
-    pubsub.publish("comms_for_post_#" + postID, { comment: newComment });
+    pubsub.publish("comms_for_post_#" + postID, { 
+      comment: {
+        mutation: "CREATED",
+        data: newComment 
+      }
+     });
 
     return newComment;
   },
 
-  deleteComment(parent, args, { db }, info) {
+  deleteComment(parent, args, { db, pubsub }, info) {
     //check comment exists
     const commentIndex = db.comments.findIndex(
       comment => comment.id === args.id
@@ -237,10 +242,20 @@ const Mutation = {
     }
     //update DB & return the deleted comment
     const deletedComment = db.comments.splice(commentIndex, 1);
+
+    // publish to subscription
+    pubsub.publish("comms_for_post_#" + deletedComment[0].post, { 
+      comment: {
+        mutation: "DELETED",
+        data: deletedComment[0] 
+      }
+     });
+
+
     return deletedComment[0];
   },
 
-  updateComment(parent, args, { db }, info) {
+  updateComment(parent, args, { db, pubsub }, info) {
     let { text } = args.commentData;
 
     //check if comment exists
@@ -252,9 +267,19 @@ const Mutation = {
     //check that updatd text is not null or undefined
     const currentComment = db.comments[commentIndex];
     text = text || currentComment.text;
+    const newComment = { ...currentComment, text }
 
     //update db
-    db.comments[commentIndex] = { ...currentComment, text };
+    db.comments[commentIndex] = newComment;
+
+
+    //publish to subscription
+    pubsub.publish("comms_for_post_#" + currentComment.post, { 
+      comment: {
+        mutation: "UPDATED",
+        data: newComment
+      }
+     });
 
     return db.comments[commentIndex];
   }

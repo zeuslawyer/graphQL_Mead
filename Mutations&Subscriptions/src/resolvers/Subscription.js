@@ -20,6 +20,7 @@ const Subscription = {
       return pubsub.asyncIterator(COMMENT_CHANNEL_PREFIX+`${args.postID}`);
     }
   },
+  
   post: {
     subscribe(parent, args, {pubsub}, info) {
       //NOTE: the pubsub.publish function call is made in the createPost mutation resolver in Mutation.js
