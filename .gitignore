@@ -1,2 +1,4 @@
 #FOLDERS
-*/node_modules
+
+*node_modules
+graphql-prisma/prisma-project/docker-compose.yml

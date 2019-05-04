@@ -93,3 +93,64 @@ mutation{
   }
 }
 ```
+
+
+#### Other operations for playground:
+```
+mutation{
+  deleteComment(id:"comm1"){
+    text
+    post{
+      title
+    }
+    author{
+      name
+    }
+  }
+
+
+  mutation{
+  updateComment(
+    id: "comm1", 
+    commentData: {text: "here is UPDATED comment text"}){
+    author{
+      name
+    }
+    text
+    id
+  }
+}
+
+
+query{
+  posts{
+    id
+    title
+    comments{
+      id
+      text
+      author{
+        name
+      }
+    }
+    author{
+      name
+    }
+  }
+}
+
+subscription{
+  comment(postID: "post1"){
+    mutation
+    data{
+      id
+      text
+      author{
+        name
+      }
+    }
+    
+  }
+}
+
+```
