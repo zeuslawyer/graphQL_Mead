@@ -37,7 +37,7 @@ const createPostForUser = async (userID, data) => {
   }
 
   try {
-    const user = await prisma.query.users(
+    const user = await prisma.query.user(
       {
         where: {
           id: userID
@@ -54,28 +54,49 @@ const createPostForUser = async (userID, data) => {
   return user;
 };
 
-createPostForUser("cjva7u9ic010m0890q5y27v4w", {
-  title: "Let's use async await!",
-  body: " This is how you use async await with prisma bindings....",
-  published: true
-});
+// createPostForUser("cjva7u9ic010m0890q5y27v4w", {
+//   title: "Let's use async await!",
+//   body: " This is how you use async await with prisma bindings....",
+//   published: true
+// });
 
+const updatePostForUser = async (postID, data) => {
+  const post = await prisma.mutation.updatePost(
+    {
+      data: {
+        ...data
+      },
+      where: {
+        id: postID
+      }
+    },
+    "{ author { id } }"
+  );
 
+  if (post)
+    console.log(
+      "HERE IS THE AUTHOR ID FOR THE UPDATED POST:  ",
+      JSON.stringify(post, null, 2)
+    );
+
+  const user = await prisma.query.user(
+    {
+      where: {
+        id: post.author.id
+      }
+    },
+    `{ id name email posts { id title published} }`
+  );
+
+  if (user)
+    console.log("HERE ARE USER DETAILS:   ", JSON.stringify(user, null, 2));
+
+  return user;
+};
+
+// updatePostForUser("cjva7uzuj01170890vynj4lfc", {
+//   title: "This ol' dog learned some new fandangled tricks!",
+//   published: true
+// });
 
 //NOTE: for operation chaining in prisma, refer to the QUICKNOTES.md file in this project's folder
-
-// prisma.mutation.updatePost({
-//     data: {
-//         body: " this is gnne CHANGE..",
-//         published: true
-//     },
-//     where: {
-//         id: "cjvaw01fc001e0890ump0ftsr"
-//     }
-// }, '{ title body published author {id}}')
-// .then(updated=>{
-//     console.log('UPDATED POST: \n' , JSON.stringify(updated, null, 2));
-//     return prisma.query.posts(null, '{ id title body published author{ name } comments{ text author{ name } } }')
-// })
-// .then(posts=>console.log('LIST OF POSTS:\n', JSON.stringify(posts, null, 2)))
-// .catch(error=>console.log(error));
