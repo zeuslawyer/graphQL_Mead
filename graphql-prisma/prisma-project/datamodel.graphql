@@ -2,8 +2,8 @@ type User {
   id: ID! @unique
   name: String!
   email: String! @unique
-  posts: [Post!]!
-  comments: [Comment!]!
+  posts: [Post!]! @relation(name: "PostToUser", onDelete: CASCADE) #When User deleted, all posts must delete
+  comments: [Comment!]! @relation(name: "CommentToUser", onDelete: CASCADE) #When User deleted, all comments must delete
 }
 
 type Post {
@@ -11,13 +11,13 @@ type Post {
   title: String!
   body: String!
   published: Boolean!
-  author: User!
-  comments: [Comment!]!
+  author: User!  @relation(name: "PostToUser", onDelete: SET_NULL) #When Post deleted, user must NOT be deleted
+  comments: [Comment!]! @relation(name: "CommentToPost", onDelete: CASCADE) #When Post deleted, all its comments must go...
 }
 
 type Comment {
   id: ID! @unique
   text: String!
-  author: User!
-  post: Post!
+  author: User! @relation(name: "CommentToUser", onDelete: SET_NULL) #When Comment deleted, user must NOT be deleted
+  post: Post! @relation(name: "CommentToPost", onDelete: SET_NULL) #When Comment deleted, the post must NOT be deleted
 }

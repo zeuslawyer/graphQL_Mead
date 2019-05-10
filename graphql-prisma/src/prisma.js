@@ -5,14 +5,6 @@ const prisma = new Prisma({
   endpoint: "http://localhost:4466/"
 });
 
-// prisma.query.users(null, '{ id name email posts { id title } }')
-// .then(data=>console.log('DATA IS: \n', JSON.stringify(data, null, 2)))
-// .catch(e=>console.log(e))
-
-// prisma.query.comments(null, '{ id text author { name } post { id title author { name } } }' )
-// .then(data=>console.log(JSON.stringify(data, null, 2)))
-// .catch(e=>console.log(e));
-
 const createPostForUser = async (userID, data) => {
   //check if userID valid
   const userExists = await prisma.exists.User({
@@ -20,7 +12,7 @@ const createPostForUser = async (userID, data) => {
   });
 
   if (!userExists) {
-    throw new Error(" CREATE NEW POST FAILED: User does not exist? ");
+    throw new Error(" CREATE NEW POST FAILED> User does not exist? ");
   }
 
   //create post and return its ID, and author details
@@ -40,7 +32,7 @@ const createPostForUser = async (userID, data) => {
 
   //check if there was error creating/retrieving
   if (!post) {
-    throw new Error(" User xists but wasnt able to create new post....\n");
+    throw new Error(" User exists but wasnt able to create new post....\n");
   }
 
   return post.author;
@@ -56,7 +48,7 @@ const createPostForUser = async (userID, data) => {
 //   )
 //   .catch(err =>
 //     console.log(
-//       `SOMETHING WENT WRONG: \n MESSAGE: ${err.message} \n AT:  ${err.path}`
+//       `SOMETHING WENT WRONG: \n ${err}`
 //     )
 //   );
 
