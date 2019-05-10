@@ -32,5 +32,5 @@ const GQLServerConfig = {
 
 const server = new GraphQLServer(GQLServerConfig);
 server.start(() => {
-  console.log("Server running on default port: 4000");
+  console.log("Server is UP AND RUNNING! \n");
 });

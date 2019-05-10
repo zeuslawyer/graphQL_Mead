@@ -14,53 +14,63 @@ const prisma = new Prisma({
 // .catch(e=>console.log(e));
 
 const createPostForUser = async (userID, data) => {
-  try {
-    const post = await prisma.mutation.createPost(
-      {
-        data: {
-          ...data,
-          author: {
-            connect: {
-              id: userID
-            }
+  //check if userID valid
+  const userExists = await prisma.exists.User({
+    id: userID
+  });
+
+  if (!userExists) {
+    throw new Error(" CREATE NEW POST FAILED: User does not exist? ");
+  }
+
+  //create post and return its ID, and author details
+  const post = await prisma.mutation.createPost(
+    {
+      data: {
+        ...data,
+        author: {
+          connect: {
+            id: userID
           }
         }
-      },
-      "{ id }"
-    );
+      }
+    },
+    "{ id author {id name email posts{ id title published }}}"
+  );
 
-    if (post) {
-      console.log("SUCCESSFULLY SAVED THIS POST TO DB: \n", post);
-    }
-  } catch (error) {
-    console.log("ERROR creating post:  ", error);
+  //check if there was error creating/retrieving
+  if (!post) {
+    throw new Error(" User xists but wasnt able to create new post....\n");
   }
 
-  try {
-    const user = await prisma.query.user(
-      {
-        where: {
-          id: userID
-        }
-      },
-      "{ id name email posts {id title published} }"
-    );
-    console.log("HERE IS THE USER:  ", user);
-    return user;
-  } catch (error) {
-    console.log("ERROR fetching user's info from db... ", error);
-  }
-
-  return user;
+  return post.author;
 };
 
 // createPostForUser("cjva7u9ic010m0890q5y27v4w", {
-//   title: "Let's use async await!",
+//   title: "I think using async await will work here...!",
 //   body: " This is how you use async await with prisma bindings....",
 //   published: true
-// });
+// })
+//   .then(author =>
+//     console.log("HERE IS THE AUTHOR ...\n", JSON.stringify(author, null, 2))
+//   )
+//   .catch(err =>
+//     console.log(
+//       `SOMETHING WENT WRONG: \n MESSAGE: ${err.message} \n AT:  ${err.path}`
+//     )
+//   );
 
 const updatePostForUser = async (postID, data) => {
+  //check if posts exists and if not throw error
+  const postExists = prisma.exists.Post({
+    id: postID
+  });
+
+  if (!postExists) {
+    throw new Error("Post update failed:  Post not found...");
+  }
+
+  //retrieve post
   const post = await prisma.mutation.updatePost(
     {
       data: {
@@ -70,33 +80,23 @@ const updatePostForUser = async (postID, data) => {
         id: postID
       }
     },
-    "{ author { id } }"
+    "{ author { id name email posts { id title published} } }"
   );
 
-  if (post)
-    console.log(
-      "HERE IS THE AUTHOR ID FOR THE UPDATED POST:  ",
-      JSON.stringify(post, null, 2)
-    );
+  //handle retrieve error
+  if (!post) {
+    throw new Error(" Post xists but wasnt able to update....\n");
+  }
 
-  const user = await prisma.query.user(
-    {
-      where: {
-        id: post.author.id
-      }
-    },
-    `{ id name email posts { id title published} }`
-  );
-
-  if (user)
-    console.log("HERE ARE USER DETAILS:   ", JSON.stringify(user, null, 2));
-
-  return user;
+  //return only author details, which includes list of posts
+  return post.author;
 };
 
 // updatePostForUser("cjva7uzuj01170890vynj4lfc", {
-//   title: "This ol' dog learned some new fandangled tricks!",
+//   title: "This dawg is chaining .then to the func calls!",
 //   published: true
-// });
+// })
+// .then(user=> console.log("HERE ARE AUTHOR DETAILS:   ", JSON.stringify(user, null, 2)))
+// .catch(err => console.log(`SOMETHING WENT WRONG: \n MESSAGE: ${err.message} \n AT:  ${err.path}`) )
 
 //NOTE: for operation chaining in prisma, refer to the QUICKNOTES.md file in this project's folder
