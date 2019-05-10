@@ -1,0 +1,2 @@
+endpoint: http://localhost:4466/bookreviews/default
+datamodel: datamodel.graphql

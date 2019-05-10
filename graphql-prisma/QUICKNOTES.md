@@ -10,16 +10,26 @@ Dependency for Prisma.
 CD into the `prisma-project` folder and 
 1) run `docker-compose up -d` to load up docker container
 
-2) then ` prisma deploy` to deploy changes in codebase relating to db.  __note:__ this command often fails if run too quickly after running previous docker command (!!!) so pause a bit or rerun command.
+2) then ` prisma deploy` to deploy changes in codebase relating to db up to the Heroku PostGres instance.  __note:__ this command often fails if run too quickly after running previous docker command (!!!) so pause a bit or rerun command.
  
-The port is 4466, as per the `docker-compose.yml` file and the endpoint property in `prisma.yml`.
+The port for the served GraphqL Playground is 4466, as per the `docker-compose.yml` file and the endpoint property in `prisma.yml`.  __note:__ only one `docker-compose.yml` is necessary, and it can sustain multiple projects.
 
 
 ###Prisma on Nodejs 
-use the [prisma-binding] (https://github.com/prisma/prisma-binding/blob/master/README.md) library.
+- use the [prisma-binding] (https://github.com/prisma/prisma-binding/blob/master/README.md) library.
+
+- the `prisma.yml` file configures the prisma project and staging. Multiple prisma projects can be run on the same docker container.  Projects must be distinguished by their endpoint names which must include the project name and staging name. 
+
+For example:
+```
+endpoint: http://localhost:4466/<<project name>> / <<staging name>>
+datamodel: datamodel.graphql
+```
+
+-- in PGAdmin, go to the database node, then under it look for the `schemas` node. Right click and refresh, and you will see sub nodes with the project name and the staging name separated by a `$` sign, and looking like this:  ` blog$default` and ` reviews$default`
 
 __How to create typedefs__
-use the script `graphql get-schema -p prisma` from the project root (graphql-prisma) to fetch the graphql schema.  This is saved in the `generated` folder, as per the configuration done in `.graphqlconfig`.  The script itself is configured in `package.json`.
+use the script `graphql get-schema -p prisma` (which follows the signature `graphql get-schema -p <<project name from .graphqlconfig>>) from the project root (graphql-prisma) to fetch the graphql schema.  This is saved in the `generated` folder, as per the configuration done in `.graphqlconfig`.  The script itself is configured in `package.json`.
 
 __Prisma object, and its arguments__
 the `prisma` object (refer to getting started for prisma-binding) has a number of methods on it, for example `prisma.query`, `prisma.mutation` and `prisma.subscription`.  Each of these are JS objects and have as properties, the resolver methods that have been defined on the graphQL operation - i.e. on query, mutation and subscription.
