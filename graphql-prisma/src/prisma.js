@@ -13,35 +13,69 @@ const prisma = new Prisma({
 // .then(data=>console.log(JSON.stringify(data, null, 2)))
 // .catch(e=>console.log(e));
 
-// prisma.mutation.createPost({
-//     data:{
-//         title: "GraphQL 101",
-//         body: " ...part of the mutation challenge...",
-//         published: false,
-//         author: {
-//             connect : {
-//                 id: "cjva6i7nz00ic0890tg4q9v70"
-//             }
-//         }
-//     }
-// }, '{ id title published}').then(data=>console.log(JSON.stringify(data, null, 2)))
-// .catch(error=>console.log(error));
+const createPostForUser = async (userID, data) => {
+  try {
+    const post = await prisma.mutation.createPost(
+      {
+        data: {
+          ...data,
+          author: {
+            connect: {
+              id: userID
+            }
+          }
+        }
+      },
+      "{ id }"
+    );
+
+    if (post) {
+      console.log("SUCCESSFULLY SAVED THIS POST TO DB: \n", post);
+    }
+  } catch (error) {
+    console.log("ERROR creating post:  ", error);
+  }
+
+  try {
+    const user = await prisma.query.users(
+      {
+        where: {
+          id: userID
+        }
+      },
+      "{ id name email posts {id title published} }"
+    );
+    console.log("HERE IS THE USER:  ", user);
+    return user;
+  } catch (error) {
+    console.log("ERROR fetching user's info from db... ", error);
+  }
+
+  return user;
+};
+
+createPostForUser("cjva7u9ic010m0890q5y27v4w", {
+  title: "Let's use async await!",
+  body: " This is how you use async await with prisma bindings....",
+  published: true
+});
+
+
 
 //NOTE: for operation chaining in prisma, refer to the QUICKNOTES.md file in this project's folder
 
-
-prisma.mutation.updatePost({
-    data: {
-        body: " TOTALLY changed the body of this post...",
-        published: true
-    },
-    where: {
-        id: "cjvaw01fc001e0890ump0ftsr"
-    }
-}, '{ title body published }')
-.then(updated=>{
-    console.log('UPDATED POST: \n' , JSON.stringify(updated, null, 2));
-    return prisma.query.posts(null, '{ id title body published author{ name } comments{ text author{ name } } }')
-})
-.then(posts=>console.log('LIST OF POSTS:\n', JSON.stringify(posts, null, 2)))
-.catch(error=>console.log(error));
+// prisma.mutation.updatePost({
+//     data: {
+//         body: " this is gnne CHANGE..",
+//         published: true
+//     },
+//     where: {
+//         id: "cjvaw01fc001e0890ump0ftsr"
+//     }
+// }, '{ title body published author {id}}')
+// .then(updated=>{
+//     console.log('UPDATED POST: \n' , JSON.stringify(updated, null, 2));
+//     return prisma.query.posts(null, '{ id title body published author{ name } comments{ text author{ name } } }')
+// })
+// .then(posts=>console.log('LIST OF POSTS:\n', JSON.stringify(posts, null, 2)))
+// .catch(error=>console.log(error));

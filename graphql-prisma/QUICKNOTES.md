@@ -42,7 +42,9 @@ query{
 
 
 __promise chaining with prisma operations__
-since prisma operations return promises, multiple operations can be chained together by making each operation return the next operation.  Example:
+since prisma operations return promises, multiple operations can be chained together by making each operation return the next operation.  
+Operations include:  `prisma.query` , `prisma.subscription`, `prisma.mutation` and `prisma.exists`
+Example:
 
 ```
 prisma.mutation.createPost({
