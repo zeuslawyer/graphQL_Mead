@@ -1,6 +1,6 @@
 const Query = {
   users(parent, args, { prisma }, info) {
-    // console.log(JSON.stringify(info, null, 2));
+    // console.log(JSON.stringify(info.fieldNodes[0].selectionSet.selections, null, 2));
     // console.log(JSON.stringify(args, null, 2))
 
     const opArgs = {}; //operational argument object initially empty => null
