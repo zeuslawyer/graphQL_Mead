@@ -1,29 +1,47 @@
 const Query = {
-  users(parent, args, { db, prisma }, info) {
-    //if no query params from client
+  users(parent, args, { prisma }, info) {
+
     // console.log(JSON.stringify(info, null, 2));
-    return prisma.query.users(null, info);
-    // if (!args.name) {
-    //   return db.usersArray;
-    // }
-    // //else
+    // console.log(JSON.stringify(args, null, 2))
+
+    const opArgs = {}; //operational argument object initially empty => null
+
+    if (args.nameOrEmail) {
+      opArgs.where = {
+        OR: [
+          {
+            name_contains: args.nameOrEmail
+          },
+          {
+            email_contains: args.nameOrEmail
+          }
+        ]
+        // name_contains : args.nameOrEmail,
+        // email_contains: args.nameOrEmail
+      };
+    }
+
+    return prisma.query.users(opArgs, info);
+
+    //else
     // return db.usersArray.filter(user => {
     //   return user.name.toLowerCase().includes(args.name.toLowerCase());
     // });
   },
 
-  posts(parent, args, { db }, info) {
+  posts(parent, args, { prisma }, info) {
+    return prisma.query.posts(null, info);
     // if no title query param
-    if (!args.titleOrBody) {
-      return db.postsArray;
-    }
+    // if (!args.titleOrBody) {
+    //   return db.postsArray;
+    // }
 
-    return db.postsArray.filter(post => {
-      let query = args.titleOrBody.toLowerCase();
-      let titleMatches = post.title.toLowerCase().includes(query);
-      let bodyMatches = post.body.toLowerCase().includes(query);
-      return titleMatches || bodyMatches;
-    });
+    // return db.postsArray.filter(post => {
+    //   let query = args.titleOrBody.toLowerCase();
+    //   let titleMatches = post.title.toLowerCase().includes(query);
+    //   let bodyMatches = post.body.toLowerCase().includes(query);
+    //   return titleMatches || bodyMatches;
+    // });
   },
 
   comments(parent, args, { db }, info) {

@@ -1,5 +1,5 @@
 type Query {  
-    users (name: String) : [User!]!
+    users (nameOrEmail: String) : [User!]!
     posts (titleOrBody: String) : [Post!]!
     comments(id: ID) : [Comment!]!
 }
@@ -64,7 +64,6 @@ enum MutationType {
 input CreateUserInputs {
     name: String!
     email: String!
-    age: Int
 }
 
 input UpdateUserInputs {
