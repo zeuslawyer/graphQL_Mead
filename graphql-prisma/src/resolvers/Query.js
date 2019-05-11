@@ -1,13 +1,15 @@
 const Query = {
-  users(parent, args, { db }, info) {
+  users(parent, args, { db, prisma }, info) {
     //if no query params from client
-    if (!args.name) {
-      return db.usersArray;
-    }
-    //else
-    return db.usersArray.filter(user => {
-      return user.name.toLowerCase().includes(args.name.toLowerCase());
-    });
+    // console.log(JSON.stringify(info, null, 2));
+    return prisma.query.users(null, info);
+    // if (!args.name) {
+    //   return db.usersArray;
+    // }
+    // //else
+    // return db.usersArray.filter(user => {
+    //   return user.name.toLowerCase().includes(args.name.toLowerCase());
+    // });
   },
 
   posts(parent, args, { db }, info) {

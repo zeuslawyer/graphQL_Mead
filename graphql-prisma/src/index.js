@@ -6,12 +6,12 @@ import Subscription from "./resolvers/Subscription";
 import Post from "./resolvers/Post";
 import User from "./resolvers/User";
 import Comment from "./resolvers/Comment";
-
-//run the prisma.js file
-import "./prisma";
+import prisma from  "./prisma";
 
 const pubsub = new PubSub();
 
+
+//set up NODEJS resolver layer between client and prisma...
 const resolvers = {
   Query,
   Mutation,
@@ -26,11 +26,12 @@ const GQLServerConfig = {
   resolvers,
   context: {
     db: dummyData, // context here is = ctx arg passed to all resolvers. is a form of state fo GraphQL
-    pubsub
+    pubsub,
+    prisma
   }
 };
 
 const server = new GraphQLServer(GQLServerConfig);
 server.start(() => {
-  console.log("Server is UP AND RUNNING! \n");
+  console.log("Server is UP AND RUNNING on port 4000! \n");
 });
