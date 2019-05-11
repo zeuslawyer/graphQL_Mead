@@ -48,15 +48,16 @@ const Query = {
     return prisma.query.posts(opArgs, info);
   },
 
-  comments(parent, args, { db }, info) {
-    //match query param if it exists
+  comments(parent, args, { prisma }, info) {
+    const opArgs = {};
+    //filter query paramters in args
     if (args.id) {
-      return db.comments.filter(comm => {
-        return args.id === comm.id;
-      });
+      opArgs.where = {
+        id: args.id
+      };
     }
-    //else
-    return db.comments;
+    return prisma.query.comments(opArgs, info);
+    
   }
 };
 
