@@ -29,7 +29,7 @@ datamodel: datamodel.graphql
 -- in PGAdmin, go to the database node, then under it look for the `schemas` node. Right click and refresh, and you will see sub nodes with the project name and the staging name separated by a `$` sign, and looking like this:  ` blog$default` and ` bookreviews$default`, where 'blog' and 'bookreviews' are the project names, and 'default' are the staging names.
 
 __How to create typedefs__
-use the script `graphql get-schema -p prisma` (which follows the signature `graphql get-schema -p <<project name from .graphqlconfig>>) from the project root (graphql-prisma) to fetch the graphql schema.  This is saved in the `generated` folder, as per the configuration done in `.graphqlconfig`.  The script itself is configured in `package.json`.
+use the script `graphql get-schema -p prisma` (which follows the signature `graphql get-schema -p <<project name from .graphqlconfig>>)` from the project root (graphql-prisma) to fetch the graphql schema.  This is saved in the `generated` folder, as per the configuration done in `.graphqlconfig`.  The script itself is configured in `package.json`.
 
 __Prisma object, the Operations, and  arguments__
 the `prisma` object (refer to getting started for prisma-binding) has a number of methods on it, for example `prisma.query`, `prisma.mutation` and `prisma.subscription`.  Each of these are JS objects and have as properties, the resolver methods that have been defined on the graphQL operation - i.e. on query, mutation and subscription.
@@ -49,7 +49,10 @@ query{
   }
 }
 ```
-_NOTE ON QUERY ARGUMENTS_: the second argument can be string, as above, or `null` (=>returns all __scalar__ fields) or an object. Spefically, the `info` object that graphql passes into all queries, i.e. the holy 4 arguments: `parent`, `args`, `ctx` and `info`.  The `info` object contains the operations that the user passed in (via the client) which is what we want to send back to the graphql server usually.
+_NOTE ON QUERY ARGUMENTS_: 
+- as noted above, the first argument is an _object_ of the operational arguments that the query is composed of (i.e. the query's params, if any, that the results need to be filted by)
+
+- the second argument can be string, as above, or `null` (=>returns all __scalar__ fields) or an object. Spefically, the `info` object that graphql passes into all queries, i.e. the holy 4 arguments: `parent`, `args`, `ctx` and `info`.  The `info` object contains the operations that the user passed in (via the client) which is what we want to send back to the graphql server usually.
 
 __promise chaining with prisma operations__
 since prisma operations return promises, multiple operations can be chained together by making each operation return the next operation.  
