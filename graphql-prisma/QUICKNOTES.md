@@ -26,7 +26,7 @@ endpoint: http://localhost:4466/<<project name>> / <<staging name>>
 datamodel: datamodel.graphql
 ```
 
--- in PGAdmin, go to the database node, then under it look for the `schemas` node. Right click and refresh, and you will see sub nodes with the project name and the staging name separated by a `$` sign, and looking like this:  ` blog$default` and ` reviews$default`
+-- in PGAdmin, go to the database node, then under it look for the `schemas` node. Right click and refresh, and you will see sub nodes with the project name and the staging name separated by a `$` sign, and looking like this:  ` blog$default` and ` bookreviews$default`, where 'blog' and 'bookreviews' are the project names, and 'default' are the staging names.
 
 __How to create typedefs__
 use the script `graphql get-schema -p prisma` (which follows the signature `graphql get-schema -p <<project name from .graphqlconfig>>) from the project root (graphql-prisma) to fetch the graphql schema.  This is saved in the `generated` folder, as per the configuration done in `.graphqlconfig`.  The script itself is configured in `package.json`.
