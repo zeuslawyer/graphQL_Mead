@@ -16,75 +16,54 @@ const Mutation = {
 
     //return the promise with returned data with selection set from info
     return prisma.mutation.createUser({ data: args.userData }, info);
-
   },
 
   async deleteUser(parent, args, { prisma }, info) {
     //check valid user
-    const userExists = await prisma.exists.User({id: args.id})
+    const userExists = await prisma.exists.User({ id: args.id });
 
-    if(!userExists) {
+    if (!userExists) {
       throw new Error(`No user with  ID ${args.id} exists.`);
     }
 
-    return prisma.mutation.deleteUser({
-      where: {
-        id: args.id
-      }
-    }, info);
-  },
-
-  updateUser(parent, args, {prisma}, info) {
-    const { id, userData } = args;
-    // verification of user existence delegated implicitly 
-    //to prisma - generates a different (less custom) error message
-    return prisma.mutation.updateUser({
-      where: {
-        id: id
-      },
-      data: userData
-    }, info)
-
-  },
-
-  createPost(parent, args, { db, pubsub }, info) {
-    const { title, body, published, authorID } = args.postData;
-
-    // check if post author registered
-    const authorExists = db.usersArray.some(user => {
-      return user.id === authorID;
-    });
-
-    if (!authorExists) {
-      throw new Error("You are not a registered user.");
-    }
-
-    // user is registered so create new post...
-    const newPost = {
-      id: uuidv4(),
-      body,
-      author: authorID,
-      title,
-      published
-    };
-
-    db.postsArray.push(newPost);
-
-    //publish to subscription IF published is set to true
-    /**
-     * @param string - name of channel, must be identical to what is used in pubsub.asyncIterator()
-     * @param object - object with property that matches name of subscription resolver, and value that matches the return type declared in schema
-     */
-    if (published) {
-      pubsub.publish(`postchannel`, {
-        post: {
-          mutation: "CREATED",
-          data: newPost
+    return prisma.mutation.deleteUser(
+      {
+        where: {
+          id: args.id
         }
-      });
-    }
+      },
+      info
+    );
+  },
 
-    return newPost;
+  updateUser(parent, args, { prisma }, info) {
+    const { id, userData } = args;
+    // verification of user existence delegated implicitly
+    //to prisma - generates a different (less custom) error message
+    return prisma.mutation.updateUser(
+      {
+        where: {
+          id: id
+        },
+        data: userData
+      },
+      info
+    );
+  },
+
+  createPost(parent, args, { prisma }, info) {
+    const { title, body, published, authorID } = args.postData;
+    const dataForPrisma = {
+      title,
+      body,
+      published,
+      author: {
+        connect: {
+          id: authorID
+        }
+      }
+    };
+    return prisma.mutation.createPost({ data: dataForPrisma }, info);
   },
 
   updatePost(parent, args, { db, pubsub }, info) {
