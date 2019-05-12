@@ -1,23 +1,22 @@
 import uuidv4 from "uuid/v4";
 
 const Mutation = {
-  createUser(parent, args, { db }, info) {
+  async createUser(parent, args, { prisma }, info) {
     //check if email already exists
-    const emailExists = db.usersArray.some(user => {
-      return user.email === args.userData.email;
+    // console.log(JSON.stringify(args, null, 2));
+    const emailExists = await prisma.exists.User({
+      email: args.userData.email
     });
 
     if (emailExists) {
-      throw new Error("Email aready registered.");
+      throw new Error(
+        `User with email ${args.userData.email} aready registered.`
+      );
     }
 
-    //if new user...
-    const user = {
-      id: uuidv4(),
-      ...args.userData
-    };
-    db.usersArray.push(user);
-    return user;
+    //return the promise with returned data with selection set from info
+    return prisma.mutation.createUser({ data: args.userData }, info);
+
   },
 
   deleteUser(parent, args, { db }, info) {
@@ -221,12 +220,12 @@ const Mutation = {
      * @param string - name of channel, must be identical to what is used in pubsub.asyncIterator()
      * @param object - object with property that matches name of subscription resolver, and value that matches the return type declared in schema
      */
-    pubsub.publish("comms_for_post_#" + postID, { 
+    pubsub.publish("comms_for_post_#" + postID, {
       comment: {
         mutation: "CREATED",
-        data: newComment 
+        data: newComment
       }
-     });
+    });
 
     return newComment;
   },
@@ -244,13 +243,12 @@ const Mutation = {
     const [deletedComment] = db.comments.splice(commentIndex, 1);
 
     // publish to subscription
-    pubsub.publish("comms_for_post_#" + deletedComment.post, { 
+    pubsub.publish("comms_for_post_#" + deletedComment.post, {
       comment: {
         mutation: "DELETED",
-        data: deletedComment 
+        data: deletedComment
       }
-     });
-
+    });
 
     return deletedComment;
   },
@@ -267,19 +265,18 @@ const Mutation = {
     //check that updatd text is not null or undefined
     const currentComment = db.comments[commentIndex];
     text = text || currentComment.text;
-    const newComment = { ...currentComment, text }
+    const newComment = { ...currentComment, text };
 
     //update db
     db.comments[commentIndex] = newComment;
 
-
     //publish to subscription
-    pubsub.publish("comms_for_post_#" + currentComment.post, { 
+    pubsub.publish("comms_for_post_#" + currentComment.post, {
       comment: {
         mutation: "UPDATED",
         data: newComment
       }
-     });
+    });
 
     return db.comments[commentIndex];
   }

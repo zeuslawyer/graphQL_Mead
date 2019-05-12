@@ -69,7 +69,6 @@ input CreateUserInputs {
 input UpdateUserInputs {
     name: String
     email: String
-    age: Int
 }
 
 input CreatePostInputs {
