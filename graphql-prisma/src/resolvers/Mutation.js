@@ -19,33 +19,19 @@ const Mutation = {
 
   },
 
-  deleteUser(parent, args, { db }, info) {
+  async deleteUser(parent, args, { prisma }, info) {
     //check valid user
-    const userIndex = db.usersArray.findIndex(user => user.id === args.id);
+    const userExists = await prisma.exists.User({id: args.id})
 
-    if (userIndex === -1) {
+    if(!userExists) {
       throw new Error(`No user with  ID ${args.id} exists.`);
     }
 
-    //else
-    const deletedUsers = db.usersArray.splice(userIndex, 1);
-
-    //retain posts and comments authored by others
-    const otherPosts = db.postsArray.filter(post => post.author != args.id);
-    let otherComments = db.comments.filter(
-      comment => comment.author != args.id
-    );
-
-    // filter remaining comments to remove others' comments on posts that no longer exist
-    otherPosts.forEach(post => {
-      otherComments = otherComments.filter(comment => comment.post === post.id);
-    });
-
-    db.comments = otherComments;
-    db.postsArray = otherPosts;
-
-    // return the deleted user object
-    return deletedUsers[0];
+    return prisma.mutation.deleteUser({
+      where: {
+        id: args.id,
+      }
+    }, info);
   },
 
   updateUser(parent, args, ctx, info) {
