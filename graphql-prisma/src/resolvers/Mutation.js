@@ -66,169 +66,75 @@ const Mutation = {
     return prisma.mutation.createPost({ data: dataForPrisma }, info);
   },
 
-  updatePost(parent, args, { db, pubsub }, info) {
+  deletePost(parent, args, { prisma }, info) {
+    return prisma.mutation.deletePost(
+      {
+        where: {
+          id: args.id
+        }
+      },
+      info
+    );
+  },
+
+  updatePost(parent, args, { prisma }, info) {
     let { title, body, published } = args.postData;
 
-    //check that post exists
-    const postIndex = db.postsArray.findIndex(post => post.id === args.id);
-    if (postIndex === -1) {
-      throw new Error("No such post found");
-    }
-
-    //create new post object & check if any update fields are EMPTY
-    const currentPost = db.postsArray[postIndex];
-    title = title || currentPost.title;
-    body = body || currentPost.body;
-    published = published === undefined ? currentPost.published : published;
-
-    const updatedPost = { ...currentPost, title, body, published };
-
-    db.postsArray[postIndex] = updatedPost;
-
-    // check whether user had toggled 'published status' or has updated something else
-    if (currentPost.published && !updatedPost.published) {
-      // -> unpublished the post
-      //deleted
-      pubsub.publish("postchannel", {
-        post: {
-          mutation: "DELETED",
-          data: currentPost //publish only the removed post because that was authorised to be published
+    return prisma.mutation.updatePost(
+      {
+        data: args.postData,
+        where: {
+          id: args.id
         }
-      });
-    } else if (!currentPost.published && updatedPost.published) {
-      //-> unpublished post now published
-      //created
-      pubsub.publish("postchannel", {
-        post: {
-          mutation: "CREATED",
-          data: updatedPost
-        }
-      });
-    } else if (updatedPost.published) {
-      //updated
-      pubsub.publish("postchannel", {
-        post: {
-          mutation: "UPDATED ",
-          data: updatedPost
-        }
-      });
-    }
-
-    return updatedPost;
+      },
+      info
+    );
   },
 
-  deletePost(parent, args, { db, pubsub }, info) {
-    //check if post exists
-    const postIndex = db.postsArray.findIndex(post => post.id === args.id);
-    if (postIndex === -1) {
-      throw new Error("Post not found.");
-    }
-
-    //remove all comments relating to deleted post
-    db.comments = db.comments.filter(comment => comment.post != args.id);
-
-    //update DB, using array destructuring
-    const [removedPost] = db.postsArray.splice(postIndex, 1);
-
-    //publish deleted post to subscription channel IF its a published post
-    if (removedPost.published) {
-      pubsub.publish("postchannel", {
-        post: {
-          mutation: "DELETED",
-          data: removedPost
-        }
-      });
-    }
-
-    return removedPost;
-  },
-
-  createComment(parent, args, { db, pubsub }, info) {
+  createComment(parent, args, { prisma }, info) {
     const { text, authorID, postID } = args.commentData;
 
-    const authorExists = db.usersArray.some(user => user.id === authorID);
-
-    const postPublished = db.postsArray.some(
-      post => post.id === postID && post.published
+    return prisma.mutation.createComment(
+      {
+        data: {
+          text: text,
+          author: {
+            connect: {
+              id: authorID
+            }
+          },
+          post: {
+            connect: {
+              id: postID
+            }
+          }
+        }
+      },
+      info
     );
-
-    if (!authorExists) throw new Error("User not found");
-    if (!postPublished) throw new Error("Unable to find post");
-
-    //else if user is registered, create & save comment to DB
-    const newComment = {
-      id: "_com" + uuidv4(),
-      text,
-      author: authorID,
-      post: postID
-    };
-
-    db.comments.push(newComment);
-
-    //publish to subscription channel for comments, then return new comment
-    /**
-     * @param string - name of channel, must be identical to what is used in pubsub.asyncIterator()
-     * @param object - object with property that matches name of subscription resolver, and value that matches the return type declared in schema
-     */
-    pubsub.publish("comms_for_post_#" + postID, {
-      comment: {
-        mutation: "CREATED",
-        data: newComment
-      }
-    });
-
-    return newComment;
   },
 
-  deleteComment(parent, args, { db, pubsub }, info) {
-    //check comment exists
-    const commentIndex = db.comments.findIndex(
-      comment => comment.id === args.id
+  updateComment(parent, args, { prisma }, info) {
+    return prisma.mutation.updateComment(
+      {
+        data: args.commentData,
+        where: {
+          id: args.id
+        }
+      },
+      info
     );
-
-    if (commentIndex === -1) {
-      throw new Error("Comment not found.");
-    }
-    //update DB & return the deleted comment
-    const [deletedComment] = db.comments.splice(commentIndex, 1);
-
-    // publish to subscription
-    pubsub.publish("comms_for_post_#" + deletedComment.post, {
-      comment: {
-        mutation: "DELETED",
-        data: deletedComment
-      }
-    });
-
-    return deletedComment;
   },
 
-  updateComment(parent, args, { db, pubsub }, info) {
-    let { text } = args.commentData;
-
-    //check if comment exists
-    const commentIndex = db.comments.findIndex(comm => comm.id === args.id);
-    if (commentIndex === -1) {
-      throw new Error("Comment not found.");
-    }
-
-    //check that updatd text is not null or undefined
-    const currentComment = db.comments[commentIndex];
-    text = text || currentComment.text;
-    const newComment = { ...currentComment, text };
-
-    //update db
-    db.comments[commentIndex] = newComment;
-
-    //publish to subscription
-    pubsub.publish("comms_for_post_#" + currentComment.post, {
-      comment: {
-        mutation: "UPDATED",
-        data: newComment
-      }
-    });
-
-    return db.comments[commentIndex];
+  deleteComment(parent, args, { prisma }, info) {
+    return prisma.mutation.deleteComment(
+      {
+        where: {
+          id: args.id
+        }
+      },
+      info
+    );
   }
 };
 
