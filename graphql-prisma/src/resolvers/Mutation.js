@@ -29,37 +29,22 @@ const Mutation = {
 
     return prisma.mutation.deleteUser({
       where: {
-        id: args.id,
+        id: args.id
       }
     }, info);
   },
 
-  updateUser(parent, args, ctx, info) {
+  updateUser(parent, args, {prisma}, info) {
     const { id, userData } = args;
+    // verification of user existence delegated implicitly 
+    //to prisma - generates a different (less custom) error message
+    return prisma.mutation.updateUser({
+      where: {
+        id: id
+      },
+      data: userData
+    }, info)
 
-    //test if email already exists
-    if (userData.email) {
-      const emailExists = ctx.db.usersArray.some(
-        user => user.email === userData.email
-      );
-
-      if (emailExists) {
-        throw new Error("A user with that email already exists.");
-      }
-    }
-
-    //find user
-    const userIndex = ctx.db.usersArray.findIndex(user => user.id === id);
-
-    if (userIndex === -1) {
-      throw new Error("No such user found.");
-    }
-
-    // update user
-    const updatedUserData = { ...ctx.db.usersArray[userIndex], ...userData };
-    ctx.db.usersArray[userIndex] = updatedUserData;
-
-    return updatedUserData;
   },
 
   createPost(parent, args, { db, pubsub }, info) {
