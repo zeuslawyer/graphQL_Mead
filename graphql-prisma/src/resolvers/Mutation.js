@@ -24,14 +24,14 @@ const Mutation = {
     }
 
     //hash password
-    const pwd = await bcrypt.hash(password, 10);
+    password = await bcrypt.hash(password, 10);
 
     //return the promise with returned data with selection set from info
     return prisma.mutation.createUser(
       {
         data: {
           ...args.userData,
-          password: pwd
+          password: password
         }
       },
       info
