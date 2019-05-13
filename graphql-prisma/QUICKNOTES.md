@@ -7,7 +7,7 @@
 ### Docker
 Dependency for Prisma.  
 
-CD into the `prisma-project` folder and 
+CD into the `prisma-project-blog` folder and 
 1) run `docker-compose up -d` to load up docker container
 
 2) then ` prisma deploy` to deploy changes in codebase relating to db up to the Heroku PostGres instance.  __note:__ this command often fails if run too quickly after running previous docker command (!!!) so pause a bit or rerun command.
@@ -15,7 +15,7 @@ CD into the `prisma-project` folder and
 The port for the served GraphqL Playground is 4466, as per the `docker-compose.yml` file and the endpoint property in `prisma.yml`.  __note:__ only one `docker-compose.yml` is necessary, and it can sustain multiple projects.
 
 
-###Prisma & prisma-bindingon Nodejs 
+###Prisma & prisma-binding on Nodejs 
 - use the [prisma-binding] (https://github.com/prisma/prisma-binding/blob/master/README.md) library.
 
 - the `prisma.yml` file configures the prisma project and staging. Multiple prisma projects can be run on the same docker container.  Projects must be distinguished by their endpoint names which must include the project name and staging name. 

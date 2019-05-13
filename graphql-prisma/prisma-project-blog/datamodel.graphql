@@ -2,6 +2,7 @@ type User {
   id: ID! @unique
   name: String!
   email: String! @unique
+  password: String!
   posts: [Post!]! @relation(name: "PostToUser", onDelete: CASCADE) #When User deleted, all posts must delete
   comments: [Comment!]! @relation(name: "CommentToUser", onDelete: CASCADE) #When User deleted, all comments must delete
 }
