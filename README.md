@@ -4,6 +4,8 @@
 - prisma-bindings nodejs package
 - postgres db on heroku free tier
 - docker container and pgAdmin (dependencies for prisma-bindings)
+- bcrypt library for password hashing + salting
+- JWT for auth
 
 ### Running the projects
 Run `npm install` inside __each__ folder to install node modules. Each folder is its own standalone project that covers the topics suggested by the folder name

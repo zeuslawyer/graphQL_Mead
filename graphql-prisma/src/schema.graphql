@@ -6,7 +6,7 @@ type Query {
 }
 
 type Mutation {
-    createUser(userData: CreateUserInputs) : User!
+    createUser(userData: CreateUserInputs) : AuthPayload!
     updateUser(id: ID!, userData: UpdateUserInputs!) : User!
     deleteUser(id: ID!): User!
     createPost(postData: CreatePostInputs): Post!
@@ -72,6 +72,11 @@ type CommentSubscriptionPayload {
   node: Comment
   updatedFields: [String!]
   previousValues: CommentPreviousValues
+}
+
+type AuthPayload {
+  token: String!
+  user: User!
 }
 
 enum MutationType {

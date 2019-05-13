@@ -1,5 +1,6 @@
 import uuidv4 from "uuid/v4";
 import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const Mutation = {
   async createUser(parent, args, { prisma }, info) {
@@ -27,15 +28,17 @@ const Mutation = {
     password = await bcrypt.hash(password, 10);
 
     //return the promise with returned data with selection set from info
-    return prisma.mutation.createUser(
-      {
-        data: {
-          ...args.userData,
-          password: password
-        }
-      },
-      info
-    );
+    const user = await prisma.mutation.createUser({
+      data: {
+        ...args.userData,
+        password: password
+      }
+    }); //info is no longer in second argument as we want ALL SCALAR fields returned
+
+    return {
+      user,
+      token: jwt.sign({ id: user.id }, "jwt-secret")
+    };
   },
 
   async deleteUser(parent, args, { prisma }, info) {
