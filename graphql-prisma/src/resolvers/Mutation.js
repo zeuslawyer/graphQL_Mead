@@ -1,9 +1,11 @@
 import uuidv4 from "uuid/v4";
+import bcrypt from "bcryptjs";
 
 const Mutation = {
   async createUser(parent, args, { prisma }, info) {
     //check if email already exists
     // console.log(JSON.stringify(args, null, 2));
+
     const emailExists = await prisma.exists.User({
       email: args.userData.email
     });
@@ -14,8 +16,26 @@ const Mutation = {
       );
     }
 
+    //password validation - length
+    let { password } = args.userData;
+
+    if (password.length < 8) {
+      throw new Error("Password must be at least 8 characters long.");
+    }
+
+    //hash password
+    const pwd = await bcrypt.hash(password, 10);
+
     //return the promise with returned data with selection set from info
-    return prisma.mutation.createUser({ data: args.userData }, info);
+    return prisma.mutation.createUser(
+      {
+        data: {
+          ...args.userData,
+          password: pwd
+        }
+      },
+      info
+    );
   },
 
   async deleteUser(parent, args, { prisma }, info) {

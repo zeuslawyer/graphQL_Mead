@@ -85,6 +85,7 @@ enum MutationType {
 input CreateUserInputs {
     name: String!
     email: String!
+    password: String!
 }
 
 input UpdateUserInputs {
