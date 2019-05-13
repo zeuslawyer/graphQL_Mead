@@ -2,12 +2,18 @@ import { Prisma } from "prisma-binding";
 
 const prisma = new Prisma({
   typeDefs: "src/generated/prisma.graphql", //see this folder's QUICKNOTES.md file for explanaton on how the typedefs are created
-  endpoint: "http://localhost:4466"
+  endpoint: "http://localhost:4466",
+  secret: "prisma-password"
 });
 
 //NOTE: for operation chaining in prisma, refer to the QUICKNOTES.md file in this project's folder
 
 export default prisma;
+
+/**
+ * functions to interact with prisma api
+ *  */
+
 // const createPostForUser = async (userID, data) => {
 //   //check if userID valid
 //   const userExists = await prisma.exists.User({
