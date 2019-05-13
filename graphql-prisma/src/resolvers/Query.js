@@ -3,7 +3,7 @@ const Query = {
     // console.log(JSON.stringify(info.fieldNodes[0].selectionSet.selections, null, 2));
     // console.log(JSON.stringify(args, null, 2))
 
-    const opArgs = {}; //operational argument object initially empty => null
+    const opArgs = {}; //operational argument object initially empty => null. Gets passed to prisma.query method
 
     if (args.nameOrEmail) {
       //add conditional checks to opArgs object...
@@ -57,7 +57,6 @@ const Query = {
       };
     }
     return prisma.query.comments(opArgs, info);
-    
   }
 };
 

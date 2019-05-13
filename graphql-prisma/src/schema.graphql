@@ -1,3 +1,4 @@
+# ******* OPERATION TYPES *******
 type Query {  
     users (nameOrEmail: String) : [User!]!
     posts (titleOrBody: String) : [Post!]!
@@ -21,6 +22,8 @@ type Subscription{
   post : PostSubscriptionPayload!
 }
 
+
+# ******* DATA TYPES *******
 type User {
   id: ID!
   name: String!
@@ -47,12 +50,27 @@ type Comment {
 
 type PostSubscriptionPayload{
   mutation: MutationType!
-  data: Post!
+  node: Post
+  updatedFields: [String!]
+  previousValues: PostPreviousValues
+}
+type PostPreviousValues {
+  id: ID!
+  title: String!
+  body: String!
+  published: Boolean!
+}
+
+type CommentPreviousValues {
+  id: ID!
+  text: String!
 }
 
 type CommentSubscriptionPayload {
   mutation: MutationType!
-  data: Comment!
+  node: Comment
+  updatedFields: [String!]
+  previousValues: CommentPreviousValues
 }
 
 enum MutationType {
@@ -61,6 +79,8 @@ enum MutationType {
   UPDATED
 }
 
+
+# ******* INPUT TYPES:  query param input types *******
 input CreateUserInputs {
     name: String!
     email: String!
