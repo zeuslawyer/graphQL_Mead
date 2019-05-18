@@ -6,10 +6,9 @@ import Subscription from "./resolvers/Subscription";
 import Post from "./resolvers/Post";
 import User from "./resolvers/User";
 import Comment from "./resolvers/Comment";
-import prisma from  "./prisma";
+import prisma from "./prisma";
 
 const pubsub = new PubSub();
-
 
 //set up NODEJS resolver layer between client and prisma...
 const resolvers = {
@@ -22,12 +21,16 @@ const resolvers = {
 };
 
 const GQLServerConfig = {
-  typeDefs: "./src/schema.graphql", //path must be absolute from root
+  typeDefs: "./src/schema.graphql", // path must be absolute from root
   resolvers,
-  context: {
-    db: dummyData, // context here is = ctx arg passed to all resolvers. is a form of state fo GraphQL
-    pubsub,
-    prisma
+  context(request) {
+    // console.log(request.request.headers)  // JWT token lives in header
+    return {
+      db: dummyData, // context here is = ctx arg passed to all resolvers. is a form of state fo GraphQL
+      pubsub,
+      prisma,
+      request
+    };
   }
 };
 

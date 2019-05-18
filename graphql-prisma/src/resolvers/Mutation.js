@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import getUserId from '../utils/getUserId'
 
 const SALT = 10;
 const JWT_SECRET = "jwt-secret";
@@ -37,9 +38,12 @@ const Mutation = {
       }
     }); //info is no longer in second argument as we want ALL SCALAR fields returned
 
+    // create JWT out of the ID property
+    const token = jwt.sign({ id: user.id }, JWT_SECRET)
+
     return {
       user,
-      token: jwt.sign({ id: user.id }, JWT_SECRET)
+      token
     };
   },
 
@@ -66,39 +70,38 @@ const Mutation = {
       throw new Error(` Password does not match. `);
     }
 
-    //else j
+    //else 
     return {
       user,
       token: jwt.sign({ id: user.id }, JWT_SECRET)
     };
   },
 
-  async deleteUser(parent, args, { prisma }, info) {
-    //check valid user
-    const userExists = await prisma.exists.User({ id: args.id });
-
-    if (!userExists) {
-      throw new Error(`No user with  ID ${args.id} exists.`);
-    }
+  async deleteUser(parent, args, { prisma, request }, info) {
+    //get User ID
+    const userID = getUserId(request)
 
     return prisma.mutation.deleteUser(
       {
         where: {
-          id: args.id
+          id: userID
         }
       },
       info
     );
   },
 
-  updateUser(parent, args, { prisma }, info) {
-    const { id, userData } = args;
+  updateUser(parent, args, { prisma, request }, info) {
+    const { userData } = args;
     // verification of user existence delegated implicitly
     //to prisma - generates a different (less custom) error message
+
+    const userID = getUserId(request);
+
     return prisma.mutation.updateUser(
       {
         where: {
-          id: id
+          id: userID
         },
         data: userData
       },
@@ -106,15 +109,19 @@ const Mutation = {
     );
   },
 
-  createPost(parent, args, { prisma }, info) {
-    const { title, body, published, authorID } = args.postData;
+  createPost(parent, args, { prisma, request }, info) {
+
+    const { title, body, published } = args.postData;
+
+    const userID = getUserId(request);
+
     const dataForPrisma = {
       title,
       body,
       published,
       author: {
         connect: {
-          id: authorID
+          id: userID
         }
       }
     };
@@ -194,3 +201,4 @@ const Mutation = {
 };
 
 export default Mutation;
+
