@@ -1,6 +1,8 @@
-import uuidv4 from "uuid/v4";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+
+const SALT = 10;
+const JWT_SECRET = "jwt-secret";
 
 const Mutation = {
   async createUser(parent, args, { prisma }, info) {
@@ -25,7 +27,7 @@ const Mutation = {
     }
 
     //hash password
-    password = await bcrypt.hash(password, 10);
+    password = await bcrypt.hash(password, SALT);
 
     //return the promise with returned data with selection set from info
     const user = await prisma.mutation.createUser({
@@ -37,7 +39,37 @@ const Mutation = {
 
     return {
       user,
-      token: jwt.sign({ id: user.id }, "jwt-secret")
+      token: jwt.sign({ id: user.id }, JWT_SECRET)
+    };
+  },
+
+  async loginUser(parent, args, { prisma }, info) {
+    const { email, password } = args.login;
+
+    //find and fetch user, for password hash
+    const user = await prisma.query.user({
+      where: { email }
+    });
+
+    //throw error if no user
+    if (!user) {
+      throw new Error(
+        `Email not found. This email -  ${email} - is not registered.`
+      );
+    }
+
+    //check that user pwd hash matches password submitted
+    const hashedpwd = user.password;
+    const matched = await bcrypt.compare(password, hashedpwd);
+
+    if (!matched) {
+      throw new Error(` Password does not match. `);
+    }
+
+    //else j
+    return {
+      user,
+      token: jwt.sign({ id: user.id }, JWT_SECRET)
     };
   },
 
