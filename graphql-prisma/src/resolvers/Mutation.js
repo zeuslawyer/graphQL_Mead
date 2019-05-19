@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import getUserId from '../utils/getUserId'
+import getUserId from "../utils/getUserId";
 
 const SALT = 10;
 const JWT_SECRET = "jwt-secret";
@@ -39,7 +39,7 @@ const Mutation = {
     }); //info is no longer in second argument as we want ALL SCALAR fields returned
 
     // create JWT out of the ID property
-    const token = jwt.sign({ id: user.id }, JWT_SECRET)
+    const token = jwt.sign({ id: user.id }, JWT_SECRET);
 
     return {
       user,
@@ -70,7 +70,7 @@ const Mutation = {
       throw new Error(` Password does not match. `);
     }
 
-    //else 
+    //else
     return {
       user,
       token: jwt.sign({ id: user.id }, JWT_SECRET)
@@ -79,8 +79,9 @@ const Mutation = {
 
   async deleteUser(parent, args, { prisma, request }, info) {
     //get User ID
-    const userID = getUserId(request)
+    const userID = getUserId(request);
 
+    //only delete this user's profile
     return prisma.mutation.deleteUser(
       {
         where: {
@@ -110,7 +111,6 @@ const Mutation = {
   },
 
   createPost(parent, args, { prisma, request }, info) {
-
     const { title, body, published } = args.postData;
 
     const userID = getUserId(request);
@@ -128,7 +128,19 @@ const Mutation = {
     return prisma.mutation.createPost({ data: dataForPrisma }, info);
   },
 
-  deletePost(parent, args, { prisma }, info) {
+  async deletePost(parent, args, { prisma, request }, info) {
+    const userID = getUserId(request);
+    const postIsByUser = await prisma.exists.Post({
+      id: args.id,
+      author: {
+        id: userID
+      }
+    });
+
+    if (!postIsByUser) {
+      throw new Error("You cannot delete this Post.");
+    }
+
     return prisma.mutation.deletePost(
       {
         where: {
@@ -139,9 +151,22 @@ const Mutation = {
     );
   },
 
-  updatePost(parent, args, { prisma }, info) {
-    let { title, body, published } = args.postData;
+  async updatePost(parent, args, { prisma, request }, info) {
+    const userID = getUserId(request);
 
+    //validate post is by user
+    const isPostByUser = await prisma.exists.Post({
+      id: args.id,
+      author: {
+        id: userID
+      }
+    });
+
+    if (!isPostByUser) {
+      return new Error("You cannot update this post.");
+    }
+
+    // ELSE
     return prisma.mutation.updatePost(
       {
         data: args.postData,
@@ -153,8 +178,13 @@ const Mutation = {
     );
   },
 
-  createComment(parent, args, { prisma }, info) {
-    const { text, authorID, postID } = args.commentData;
+  createComment(parent, args, { prisma, request }, info) {
+    const userID = getUserId(request);
+    const { text, postID } = args.commentData;
+
+    if (!userID) {
+      return new Error("You cannot create a comment.");
+    }
 
     return prisma.mutation.createComment(
       {
@@ -162,7 +192,7 @@ const Mutation = {
           text: text,
           author: {
             connect: {
-              id: authorID
+              id: userID
             }
           },
           post: {
@@ -176,7 +206,21 @@ const Mutation = {
     );
   },
 
-  updateComment(parent, args, { prisma }, info) {
+  async updateComment(parent, args, { prisma, request }, info) {
+    const userID = getUserId(request);
+
+    //verify comment is by user
+    const isCommentByUser = await prisma.exists.Comment({
+      id: args.id,
+      author: {
+        id: userID
+      }
+    });
+
+    if (!isCommentByUser) {
+      return new Error("You cannot update this comment.");
+    }
+
     return prisma.mutation.updateComment(
       {
         data: args.commentData,
@@ -188,7 +232,25 @@ const Mutation = {
     );
   },
 
-  deleteComment(parent, args, { prisma }, info) {
+  async deleteComment(parent, args, { prisma, request }, info) {
+    const userID = getUserId(request);
+    if (!userID) {
+      return new Error("You must be logged in to delete your comments");
+    }
+
+    //verify comment is by user
+    const isCommentByUser = await prisma.exists.Comment({
+      id: args.id,
+      author: {
+        id: userID
+      }
+    });
+
+    if (!isCommentByUser) {
+      return new Error("You cannot delete this comment.");
+    }
+
+    // else
     return prisma.mutation.deleteComment(
       {
         where: {
@@ -201,4 +263,3 @@ const Mutation = {
 };
 
 export default Mutation;
-
