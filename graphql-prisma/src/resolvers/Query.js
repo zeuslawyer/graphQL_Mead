@@ -1,3 +1,4 @@
+import getUserId from "../utils/getUserId";
 const Query = {
   users(parent, args, { prisma }, info) {
     // console.log(JSON.stringify(info.fieldNodes[0].selectionSet.selections, null, 2));
@@ -46,6 +47,35 @@ const Query = {
     }
 
     return prisma.query.posts(opArgs, info);
+  },
+
+  async post(parent, args, { prisma, request }, info) {
+    const userID = getUserId(request, false);
+
+    // return the post if it is published.  if unpublished, return only if author is the user
+    const posts = await prisma.query.posts(
+      {
+        where: {
+          id: args.id,
+          OR: [
+            {
+              published: true
+            },
+            {
+              author: {
+                id: userID
+              }
+            }
+          ]
+        }
+      },
+      info
+    );
+
+    if (posts.length === 0) throw new Error("Post not found.");
+
+    //else
+    return posts[0];
   },
 
   comments(parent, args, { prisma }, info) {

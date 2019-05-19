@@ -3,23 +3,23 @@ import jwt from "jsonwebtoken";
 /**
  * extract JWT from Authorization header and decode the JWT to return UID of user
  * @param {object} request , http request object that is returned as part of prisma context
- * @returns {String} id: the UID of the user
+ * @returns {String  || undefined} id: the UID of the user if auser authenticated or undefined if not
  */
-const getUserId = request => {
+const getUserId = (request, requireAuth = true) => {
   const headerAuth = request.request.headers.authorization;
 
   //check headerAuth exists
-  if (!headerAuth) {
-    throw new Error("Authentication required");
+  if (headerAuth) {
+    // remove 'bearer' from header string
+  let token = headerAuth.replace("Bearer ", "");
+  const decodedUser = jwt.verify(token, "jwt-secret");
+  return decodedUser.id
   }
 
-  // remove 'bearer' from header string
-  let token = headerAuth.replace("Bearer ", "");
+  if(requireAuth) throw new Error('Authentication required.')
 
-  const decodedUser = jwt.verify(token, "jwt-secret");
-
-
-  return decodedUser.id
+  return null //  dont return undefined as will impact prisma.query in query.js
+  
 };
 
 
