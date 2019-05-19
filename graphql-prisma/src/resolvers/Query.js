@@ -87,6 +87,18 @@ const Query = {
       };
     }
     return prisma.query.comments(opArgs, info);
+  },
+  me(parent, args, { prisma, request }, info) {
+    const userID = getUserId(request, true);
+
+    return prisma.query.user (
+      {
+        where: {
+          id: userID
+        }
+      },
+      info
+    );
   }
 };
 
