@@ -29,11 +29,8 @@ const Query = {
   },
 
   posts(parent, args, { prisma }, info) {
-    const opArgs = {};
-
-    if (args.titleOrBody) {
-      //apply filters
-      opArgs.where = {
+    const opArgs = {
+      where: {
         OR: [
           {
             body_contains: args.titleOrBody
@@ -41,11 +38,43 @@ const Query = {
           {
             title_contains: args.titleOrBody
           }
-        ],
-        AND: [{ published: true }]
-      };
+        ]
+      }
+    };
+
+    // return only published if specified. ignore if published = false
+    if (args.published) {
+      opArgs.where.published = true;
     }
 
+    return prisma.query.posts(opArgs, info);
+  },
+
+  myPosts(parent, args, { prisma, request }, info) {
+    const userID = getUserId(request, true);
+
+    // ensure only user's posts are fetched
+    const opArgs = {
+      where: {
+        author: {
+          id: userID
+        }
+      }
+    };
+
+    // filter by query
+    if (args.query) {
+      opArgs.where.OR = [
+        {
+          body_contains: args.query
+        },
+        {
+          title_contains: args.query
+        }
+      ];
+    }
+
+    //return data
     return prisma.query.posts(opArgs, info);
   },
 
@@ -91,10 +120,10 @@ const Query = {
   me(parent, args, { prisma, request }, info) {
     const userID = getUserId(request, true);
 
-    return prisma.query.user (
+    return prisma.query.user(
       {
         where: {
-          id: userID
+          id: userID // if no userID ensure it is null, not undefined
         }
       },
       info

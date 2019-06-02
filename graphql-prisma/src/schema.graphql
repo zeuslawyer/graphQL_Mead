@@ -1,10 +1,11 @@
 # ******* OPERATION TYPES *******
 type Query {  
     users (nameOrEmail: String) : [User!]!
-    posts (titleOrBody: String) : [Post!]!
+    posts (titleOrBody: String, published: Boolean) : [Post!]!
+    myPosts(query: String): [Post!]!
     comments(id: ID) : [Comment!]!
     post(id: ID!): Post!
-    me: User!
+    me: User!   
 }
 
 type Mutation {

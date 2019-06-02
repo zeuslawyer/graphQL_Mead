@@ -21,7 +21,7 @@ const getUserId = (request, requireAuth = true) => {
   if (requireAuth) throw new Error("Authentication required.");
 
   //all other circumstances return only null
-  return null; //  dont return undefined as will impact prisma.query in query.js
+  return null; //  dont return undefined as will impact prisma.query in Query.js
 };
 
 export default getUserId;
